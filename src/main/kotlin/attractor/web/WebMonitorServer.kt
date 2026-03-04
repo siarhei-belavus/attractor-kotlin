@@ -1401,7 +1401,7 @@ java -jar coreys-attractor-*.jar --web-port 7070</code></pre>
 <table>
 <tr><th>View</th><th>Purpose</th></tr>
 <tr><td><strong>Monitor</strong></td><td>Real-time status of all active pipelines. Each pipeline gets a tab showing its stage list, live log, and graph.</td></tr>
-<tr><td><strong>&#10024; Create</strong></td><td>Write or generate a DOT pipeline and submit it for execution.</td></tr>
+<tr><td><strong>🚀 Create</strong></td><td>Write or generate a DOT pipeline and submit it for execution.</td></tr>
 <tr><td><strong>&#128193; Archived</strong></td><td>Table of archived completed, failed, or cancelled pipelines.</td></tr>
 <tr><td><strong>&#128229; Import</strong></td><td>Upload a previously exported pipeline ZIP file.</td></tr>
 <tr><td><strong>&#9881; Settings</strong></td><td>Configure execution mode, provider toggles, CLI commands, and UI preferences.</td></tr>
@@ -2220,9 +2220,9 @@ button { font-variant-emoji: text; }
 header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 12px 20px; display: flex; align-items: center; gap: 12px; }
 header h1 { font-size: 1.05rem; font-weight: 600; color: var(--text-strong); flex: 1; }
 .conn-indicator { display: flex; align-items: center; gap: 5px; font-size: 0.72rem; color: var(--text-faint); }
-.conn-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--text-faint); }
-.conn-dot.live { background: #3fb950; animation: pulse 2s infinite; }
-.conn-dot.offline { background: #f85149; animation: pulse 1.4s infinite; }
+.conn-dot { width: 10px; height: 10px; border-radius: 50%; background: radial-gradient(circle at 35% 32%, #b0b8c4, #6e7681 55%, #3a3f47); box-shadow: 0 1px 3px rgba(0,0,0,0.5), inset 0 -1px 2px rgba(0,0,0,0.3); }
+.conn-dot.live    { background: radial-gradient(circle at 35% 32%, #80ffaa, #34d058 50%, #137a2e); box-shadow: 0 1px 5px rgba(0,220,80,0.7), inset 0 -1px 2px rgba(0,0,0,0.25); animation: pulse 2s infinite; }
+.conn-dot.offline { background: radial-gradient(circle at 35% 32%, #ff9090, #f85149 50%, #a01020); box-shadow: 0 1px 5px rgba(248,60,60,0.7), inset 0 -1px 2px rgba(0,0,0,0.25); animation: pulse 1.4s infinite; }
 
 /* Tab bar */
 .tab-bar { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 20px; display: flex; align-items: flex-end; gap: 2px; overflow-x: auto; min-height: 40px; }
@@ -2232,6 +2232,14 @@ header h1 { font-size: 1.05rem; font-weight: 600; color: var(--text-strong); fle
 .tab-empty { padding: 10px 16px; font-size: 0.78rem; color: var(--text-faint); font-style: italic; align-self: center; }
 .tab-close { margin-left: 4px; opacity: 0.45; font-size: 0.85rem; line-height: 1; padding: 1px 3px; border-radius: 3px; cursor: pointer; flex-shrink: 0; }
 .tab-close:hover { opacity: 1; background: rgba(128,128,128,0.25); }
+.tab-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+.tab-dot-idle      { background: radial-gradient(circle at 35% 32%, #b0b8c4, #6e7681 55%, #3a3f47); box-shadow: 0 1px 3px rgba(0,0,0,0.5), inset 0 -1px 2px rgba(0,0,0,0.3); opacity: 0.7; }
+.tab-dot-running   { background: radial-gradient(circle at 35% 32%, #80ffaa, #34d058 50%, #137a2e); box-shadow: 0 1px 4px rgba(0,220,80,0.7), inset 0 -1px 2px rgba(0,0,0,0.25); animation: tab-dot-blink 1s ease-in-out infinite; }
+.tab-dot-completed { background: radial-gradient(circle at 35% 32%, #80ffaa, #34d058 50%, #137a2e); box-shadow: 0 1px 4px rgba(0,220,80,0.65), inset 0 -1px 2px rgba(0,0,0,0.25); }
+.tab-dot-failed    { background: radial-gradient(circle at 35% 32%, #ff9090, #f85149 50%, #a01020); box-shadow: 0 1px 4px rgba(248,60,60,0.65), inset 0 -1px 2px rgba(0,0,0,0.25); }
+.tab-dot-cancelled { background: radial-gradient(circle at 35% 32%, #ff9090, #f85149 50%, #a01020); box-shadow: 0 1px 4px rgba(248,60,60,0.5), inset 0 -1px 2px rgba(0,0,0,0.25); opacity: 0.7; }
+.tab-dot-paused    { background: radial-gradient(circle at 35% 32%, #ffe066, #e3b341 50%, #8a6200); box-shadow: 0 1px 4px rgba(220,160,0,0.55), inset 0 -1px 2px rgba(0,0,0,0.25); opacity: 0.85; }
+@keyframes tab-dot-blink { 0%,100% { opacity: 1; } 50% { opacity: 0.2; } }
 
 /* Badge */
 .badge { display: inline-flex; align-items: center; gap: 5px; padding: 2px 7px; border-radius: 10px; font-size: 0.65rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
@@ -2339,6 +2347,21 @@ main { max-width: 1200px; margin: 0 auto; padding: 20px; display: grid; grid-tem
 .dash-stat-value.s-failed { color: #f85149; }
 .dash-running-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #f78166; animation: pulse 1.4s infinite; flex-shrink: 0; }
 .dashboard-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px; }
+.dash-toolbar { display: flex; align-items: center; justify-content: flex-end; margin-bottom: 12px; }
+.dash-layout-toggle { display: flex; border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
+.dash-lt-btn { background: var(--surface); color: var(--text-muted); border: none; padding: 5px 10px; font-size: 0.9rem; cursor: pointer; line-height: 1; }
+.dash-lt-btn:hover { background: var(--surface-muted); color: var(--text); }
+.dash-lt-btn.active { background: #1c2d3e; color: #79c0ff; }
+[data-theme="light"] .dash-lt-btn.active { background: #e1f0f5; color: #006876; }
+.dashboard-list { display: flex; flex-direction: column; gap: 4px; }
+.dash-list-row { display: flex; align-items: center; gap: 10px; padding: 9px 14px; background: var(--surface); border: 1px solid var(--border); border-radius: 6px; cursor: pointer; overflow: hidden; position: relative; transition: border-color 0.12s; }
+.dash-list-row:hover { border-color: #388bfd; }
+.dash-lr-status-bar { position: absolute; left: 0; top: 0; bottom: 0; width: 3px; flex-shrink: 0; }
+.dash-lr-name { flex: 1; font-size: 0.9rem; font-weight: 600; color: var(--text-strong); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.dash-lr-progress { width: 80px; flex-shrink: 0; height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; }
+.dash-lr-stage-label { width: 160px; flex-shrink: 0; font-size: 0.78rem; color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dash-lr-meta { font-size: 0.7rem; color: var(--text-faint); white-space: nowrap; flex-shrink: 0; }
+@media (max-width: 700px) { .dash-lr-progress, .dash-lr-stage-label, .dash-lr-meta { display: none; } }
 .dash-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; cursor: pointer; overflow: hidden; display: flex; flex-direction: column; transition: border-color 0.12s, box-shadow 0.12s; }
 .dash-card:hover { border-color: #388bfd; box-shadow: 0 0 0 1px #388bfd22; }
 .dash-card-top { height: 3px; flex-shrink: 0; }
@@ -2402,11 +2425,6 @@ main { max-width: 1200px; margin: 0 auto; padding: 20px; display: grid; grid-tem
 .vh-row-actions { display: flex; gap: 4px; flex-shrink: 0; }
 .btn-vh { font-size: 0.72rem; padding: 2px 7px; border-radius: 4px; border: 1px solid var(--border); background: var(--surface-muted); color: var(--text-dim); cursor: pointer; white-space: nowrap; }
 .btn-vh:hover { border-color: var(--accent); color: var(--text); }
-.version-nav { display: flex; align-items: center; gap: 8px; padding: 4px 0 8px 0; margin-bottom: 4px; }
-.vn-arrow { background: none; border: 1px solid var(--border); border-radius: 4px; color: var(--text-muted); font-size: 1rem; padding: 1px 8px; cursor: pointer; line-height: 1; }
-.vn-arrow:hover:not(:disabled) { border-color: var(--accent); color: var(--text); }
-.vn-arrow:disabled { opacity: 0.3; cursor: default; }
-.vn-label { font-size: 0.8rem; color: var(--text-muted); font-family: monospace; }
 .view-err { font-size: 0.75rem; color: var(--danger, #f85149); margin-left: 8px; opacity: 1; transition: opacity 0.3s; }
 
 /* Artifact modal */
@@ -2431,9 +2449,6 @@ main { max-width: 1200px; margin: 0 auto; padding: 20px; display: grid; grid-tem
 .nav-btn:hover { background: var(--surface-muted); color: var(--text); }
 .nav-btn.active { background: var(--surface-muted); color: var(--text-strong); }
 
-/* Theme toggle button */
-.theme-toggle-btn { background: transparent; border: none; color: var(--text-muted); padding: 5px 9px; border-radius: 6px; font-size: 1.05rem; cursor: pointer; line-height: 1; }
-.theme-toggle-btn:hover { background: var(--surface-muted); }
 
 /* Create view */
 .create-layout { max-width: 1440px; margin: 0 auto; padding: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; height: calc(100vh - 45px); box-sizing: border-box; }
@@ -2541,8 +2556,6 @@ input:checked + .toggle-slider:before { transform:translateX(20px); }
 [data-theme="light"] .stage.repairing  { border-color: #1f6feb; }
 [data-theme="light"] .stage-log-btn.active { background: #ede9fe; border-color: #4f46e566; color: #4338ca; }
 [data-theme="light"] .log-line { border-bottom-color: rgba(0,0,0,0.05); }
-[data-theme="light"] .conn-dot.live { background: #16a34a; }
-[data-theme="light"] .conn-dot.offline { background: #dc2626; }
 [data-theme="light"] .pipeline-graph-error { color: #dc2626; }
 [data-theme="light"] .dash-elapsed { color: #7c3aed; }
 [data-theme="light"] .dot-textarea { background: #ffffff; color: #18181b; }
@@ -2557,13 +2570,12 @@ input:checked + .toggle-slider:before { transform:translateX(20px); }
   <h1><a href="#" onclick="showView('monitor');selectTab(DASHBOARD_TAB_ID);return false;" style="color:inherit;text-decoration:none;">&#9889; Corey's Attractor</a></h1>
   <nav style="display:flex;gap:3px;">
     <button class="nav-btn active" id="navMonitor" onclick="showView('monitor')">Monitor</button>
-    <button class="nav-btn" id="navCreate" onclick="showView('create')">&#10024; Create</button>
+    <button class="nav-btn" id="navCreate" onclick="showView('create')">🚀 Create</button>
     <button class="nav-btn" onclick="openImportModal()">&#128229; Import</button>
     <button class="nav-btn" id="navArchived" onclick="showView('archived')">&#128193; Archived</button>
-    <button class="nav-btn" id="navSettings" onclick="showView('settings')">&#9881; Settings</button>
+    <button class="nav-btn" id="navSettings" onclick="showView('settings')">&#9881;&#65039; Settings</button>
     <button class="nav-btn" onclick="window.open('/docs','_blank')">&#128218; Docs</button>
   </nav>
-  <button class="theme-toggle-btn" id="themeToggle" onclick="toggleTheme()" aria-label="Switch to light theme" title="Switch to light theme">&#9728;</button>
   <div class="conn-indicator">
     <span id="connDot" class="conn-dot offline" title="Offline"></span>
   </div>
@@ -2659,6 +2671,18 @@ input:checked + .toggle-slider:before { transform:translateX(20px); }
 <div id="viewSettings" style="display:none; padding: 24px; max-width: 640px; margin: 0 auto;">
   <div class="card">
     <h2>Settings</h2>
+
+    <!-- Dark Theme -->
+    <div class="setting-row">
+      <div class="setting-info">
+        <div class="setting-label">Dark Theme</div>
+        <div class="setting-desc">Switch between dark and light appearance</div>
+      </div>
+      <label class="toggle-switch">
+        <input type="checkbox" id="settingDarkTheme" onchange="toggleTheme()">
+        <span class="toggle-slider"></span>
+      </label>
+    </div>
 
     <!-- Fireworks -->
     <div class="setting-row">
@@ -2793,6 +2817,8 @@ var _closedTabsRaw; try { _closedTabsRaw = localStorage.getItem('attractor-close
 var closedTabs = {};
 if (_closedTabsRaw) { try { var _cta = JSON.parse(_closedTabsRaw); if (Array.isArray(_cta)) _cta.forEach(function(id){ closedTabs[id] = true; }); } catch(e){} }
 if (_storedTab && closedTabs[_storedTab]) { selectedId = DASHBOARD_TAB_ID; try { localStorage.setItem('attractor-selected-tab', DASHBOARD_TAB_ID); } catch(e){} }
+var _storedLayout; try { _storedLayout = localStorage.getItem('attractor-dashboard-layout'); } catch(e){}
+var dashLayout = (_storedLayout === 'list') ? 'list' : 'card';
 var panelBuiltFor = null;  // which id the main panel DOM was built for
 var logRenderedCount = {}; // id -> number of log lines already appended to DOM
 var elapsedTimer = null;   // interval that ticks the elapsed counter every second
@@ -2827,6 +2853,18 @@ function fmtDur(ms) {
 }
 
 // ── Dashboard ────────────────────────────────────────────────────────────────
+function saveDashLayout() {
+  try { localStorage.setItem('attractor-dashboard-layout', dashLayout); } catch(e){}
+}
+
+function setDashLayout(mode) {
+  if (mode !== 'card' && mode !== 'list') return;
+  if (dashLayout === mode) return;
+  dashLayout = mode;
+  saveDashLayout();
+  if (selectedId === DASHBOARD_TAB_ID) renderDashboard();
+}
+
 function startDashboardTimer() {
   dashboardTimer = setInterval(tickDashboardElapsed, 1000);
 }
@@ -2880,6 +2918,101 @@ function tickDashboardElapsed() {
   }
 }
 
+function dashPipelineData(id) {
+  var p = pipelines[id];
+  var st = p.state || {};
+  var status = st.status || 'idle';
+  var sc = 's-' + status;
+  var name = esc(st.pipeline || p.fileName || 'pipeline');
+  // Stage progress
+  var stages = st.stages || [];
+  var totalStages = stages.length;
+  var doneStages = 0;
+  for (var j = 0; j < stages.length; j++) { if (stages[j].status === 'completed') doneStages++; }
+  var pct = totalStages > 0 ? Math.min(100, Math.round(doneStages / totalStages * 100))
+          : (status === 'completed' ? 100 : 0);
+  // Stage label
+  var stageLabel = '';
+  if (status === 'running') {
+    for (var j = 0; j < stages.length; j++) {
+      if (stages[j].status === 'running') { stageLabel = '\u25b6\ufe0e\u2002' + esc(stages[j].name); break; }
+    }
+    if (!stageLabel) stageLabel = 'Waiting\u2026';
+  } else if (status === 'paused')    { stageLabel = '\u23f8\ufe0e\u2002Paused'; }
+    else if (status === 'completed') { stageLabel = '\u2713\u2002Completed'; }
+    else if (status === 'failed')    { stageLabel = '\u2717\u2002Failed'; }
+    else if (status === 'cancelled') { stageLabel = '\u2014\u2002Cancelled'; }
+  // Elapsed
+  var elapsedStr = getDashElapsed(st);
+  // Started time
+  var startedStr = '';
+  if (st.startedAt) {
+    var d = new Date(st.startedAt);
+    var today = new Date();
+    startedStr = d.toDateString() !== today.toDateString()
+      ? d.toLocaleDateString([], {month:'short', day:'numeric'}) + ' ' + d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})
+      : d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+  }
+  var stageCountStr = totalStages > 0 ? doneStages + '\u2009/\u2009' + totalStages + ' stages' : '';
+  var simBadge = p.simulate ? '<span class="dash-sim-badge">SIM</span>' : '';
+  var isTerminal = (status === 'completed' || status === 'failed' || status === 'cancelled');
+  var cardActions = isTerminal
+    ? '<div class="dash-card-actions">'
+      + '<button class="dash-card-action-btn arch" onclick="dashCardArchive(\'' + id + '\',event)" title="Archive">&#8595;</button>'
+      + '<button class="dash-card-action-btn del" onclick="dashCardDelete(\'' + id + '\',event)" title="Delete">&#10005;</button>'
+      + '</div>'
+    : '';
+  return { status: status, sc: sc, name: name, pct: pct, stageLabel: stageLabel,
+           elapsedStr: elapsedStr, startedStr: startedStr, stageCountStr: stageCountStr,
+           simBadge: simBadge, isTerminal: isTerminal, cardActions: cardActions };
+}
+
+function buildDashCards(visibleIds) {
+  var cards = '';
+  for (var i = 0; i < visibleIds.length; i++) {
+    var id = visibleIds[i];
+    var d = dashPipelineData(id);
+    cards += '<div class="dash-card" onclick="selectTab(\'' + id + '\')">'
+      + '<div class="dash-card-top ' + d.sc + '"></div>'
+      + '<div class="dash-card-body">'
+      +   '<div class="dash-card-title-row"><span class="dash-card-name">' + d.name + '</span>' + d.simBadge + d.cardActions + '</div>'
+      +   '<div class="dash-status-row">'
+      +     '<span class="badge badge-' + esc(d.status) + '">' + esc(d.status) + '</span>'
+      +     '<span class="dash-elapsed ' + d.sc + '" id="dash-elapsed-' + id + '" data-pipeline-id="' + id + '">' + d.elapsedStr + '</span>'
+      +   '</div>'
+      +   '<div class="dash-progress-track"><div class="dash-progress-fill ' + d.sc + '" style="width:' + d.pct + '%"></div></div>'
+      +   '<div class="dash-stage-label">' + d.stageLabel + '</div>'
+      + '</div>'
+      + '<div class="dash-card-footer">'
+      +   '<span class="dash-stage-count">' + d.stageCountStr + '</span>'
+      +   '<span class="dash-started">' + d.startedStr + '</span>'
+      + '</div>'
+      + '</div>';
+  }
+  return cards;
+}
+
+function buildDashList(visibleIds) {
+  var html = '';
+  for (var i = 0; i < visibleIds.length; i++) {
+    var id = visibleIds[i];
+    var d = dashPipelineData(id);
+    var metaStr = d.stageCountStr + (d.stageCountStr && d.startedStr ? ' \u00b7 ' : '') + d.startedStr;
+    html += '<div class="dash-list-row" onclick="selectTab(' + JSON.stringify(id) + ')">'
+      + '<div class="dash-lr-status-bar ' + d.sc + '"></div>'
+      + '<span class="badge badge-' + esc(d.status) + '" style="flex-shrink:0;">' + esc(d.status) + '</span>'
+      + d.simBadge
+      + '<span class="dash-lr-name">' + d.name + '</span>'
+      + '<div class="dash-lr-progress"><div class="dash-progress-fill ' + d.sc + '" style="width:' + d.pct + '%"></div></div>'
+      + '<span class="dash-lr-stage-label">' + d.stageLabel + '</span>'
+      + '<span class="dash-elapsed ' + d.sc + '" id="dash-elapsed-' + id + '" data-pipeline-id="' + id + '">' + d.elapsedStr + '</span>'
+      + '<span class="dash-lr-meta">' + metaStr + '</span>'
+      + d.cardActions
+      + '</div>';
+  }
+  return html;
+}
+
 function renderDashboard() {
   stopDashboardTimer();
   var ids = Object.keys(pipelines);
@@ -2923,85 +3056,25 @@ function renderDashboard() {
     + '<div class="dash-stat"><div class="dash-stat-label">Success Rate</div><div class="dash-stat-value">' + (successRate !== null ? successRate + '%' : '\u2014') + '</div></div>'
     + '</div>';
 
+  var toolbarHtml = '<div class="dash-toolbar">'
+    + '<div class="dash-layout-toggle">'
+    +   '<button class="dash-lt-btn' + (dashLayout === 'card' ? ' active' : '') + '" aria-pressed="' + (dashLayout === 'card' ? 'true' : 'false') + '" onclick="setDashLayout(\'card\')" title="Card view">\u229e</button>'
+    +   '<button class="dash-lt-btn' + (dashLayout === 'list' ? ' active' : '') + '" aria-pressed="' + (dashLayout === 'list' ? 'true' : 'false') + '" onclick="setDashLayout(\'list\')" title="List view">\u2261</button>'
+    + '</div></div>';
+
   if (totalCount === 0) {
-    mainEl.innerHTML = '<div class="dashboard-layout">' + statsHtml
+    mainEl.innerHTML = '<div class="dashboard-layout">' + toolbarHtml + statsHtml
       + '<div class="dash-empty"><div class="dash-empty-icon">\u26a1</div>'
       + '<div style="font-size:1rem;font-weight:600;color:var(--text-muted);">No pipelines yet</div>'
       + '<p>Use <strong>Create</strong> to generate and run a pipeline.</p></div></div>';
     return;
   }
 
-  var cards = '';
-  for (var i = 0; i < visibleIds.length; i++) {
-    var id = visibleIds[i];
-    var p = pipelines[id];
-    var st = p.state || {};
-    var status = st.status || 'idle';
-    var sc = 's-' + status;
-    var name = esc(st.pipeline || p.fileName || 'pipeline');
-
-    // Stage progress
-    var stages = st.stages || [];
-    var totalStages = stages.length;
-    var doneStages = 0;
-    for (var j = 0; j < stages.length; j++) { if (stages[j].status === 'completed') doneStages++; }
-    var pct = totalStages > 0 ? Math.min(100, Math.round(doneStages / totalStages * 100))
-            : (status === 'completed' ? 100 : 0);
-
-    // Stage label
-    var stageLabel = '';
-    if (status === 'running') {
-      for (var j = 0; j < stages.length; j++) {
-        if (stages[j].status === 'running') { stageLabel = '\u25b6\ufe0e\u2002' + esc(stages[j].name); break; }
-      }
-      if (!stageLabel) stageLabel = 'Waiting\u2026';
-    } else if (status === 'paused')    { stageLabel = '\u23f8\ufe0e\u2002Paused'; }
-      else if (status === 'completed') { stageLabel = '\u2713\u2002Completed'; }
-      else if (status === 'failed')    { stageLabel = '\u2717\u2002Failed'; }
-      else if (status === 'cancelled') { stageLabel = '\u2014\u2002Cancelled'; }
-
-    // Elapsed
-    var elapsedStr = getDashElapsed(st);
-    var elapsedClass = 'dash-elapsed ' + sc;
-
-    // Footer: started time
-    var startedStr = '';
-    if (st.startedAt) {
-      var d = new Date(st.startedAt);
-      var today = new Date();
-      startedStr = d.toDateString() !== today.toDateString()
-        ? d.toLocaleDateString([], {month:'short', day:'numeric'}) + ' ' + d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})
-        : d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
-    }
-    var stageCountStr = totalStages > 0 ? doneStages + '\u2009/\u2009' + totalStages + ' stages' : '';
-    var simBadge = p.simulate ? '<span class="dash-sim-badge">SIM</span>' : '';
-    var isTerminal = (status === 'completed' || status === 'failed' || status === 'cancelled');
-    var cardActions = isTerminal
-      ? '<div class="dash-card-actions">'
-        + '<button class="dash-card-action-btn arch" onclick="dashCardArchive(\'' + id + '\',event)" title="Archive">&#8595;</button>'
-        + '<button class="dash-card-action-btn del" onclick="dashCardDelete(\'' + id + '\',event)" title="Delete">&#10005;</button>'
-        + '</div>'
-      : '';
-
-    cards += '<div class="dash-card" onclick="selectTab(\'' + id + '\')">'
-      + '<div class="dash-card-top ' + sc + '"></div>'
-      + '<div class="dash-card-body">'
-      +   '<div class="dash-card-title-row"><span class="dash-card-name">' + name + '</span>' + simBadge + cardActions + '</div>'
-      +   '<div class="dash-status-row">'
-      +     '<span class="badge badge-' + esc(status) + '">' + esc(status) + '</span>'
-      +     '<span class="' + elapsedClass + '" id="dash-elapsed-' + id + '" data-pipeline-id="' + id + '">' + elapsedStr + '</span>'
-      +   '</div>'
-      +   '<div class="dash-progress-track"><div class="dash-progress-fill ' + sc + '" style="width:' + pct + '%"></div></div>'
-      +   '<div class="dash-stage-label">' + stageLabel + '</div>'
-      + '</div>'
-      + '<div class="dash-card-footer">'
-      +   '<span class="dash-stage-count">' + stageCountStr + '</span>'
-      +   '<span class="dash-started">' + startedStr + '</span>'
-      + '</div>'
-      + '</div>';
+  if (dashLayout === 'list') {
+    mainEl.innerHTML = '<div class="dashboard-layout">' + toolbarHtml + statsHtml + '<div class="dashboard-list">' + buildDashList(visibleIds) + '</div></div>';
+  } else {
+    mainEl.innerHTML = '<div class="dashboard-layout">' + toolbarHtml + statsHtml + '<div class="dashboard-grid">' + buildDashCards(visibleIds) + '</div></div>';
   }
-
-  mainEl.innerHTML = '<div class="dashboard-layout">' + statsHtml + '<div class="dashboard-grid">' + cards + '</div></div>';
   startDashboardTimer();
 }
 
@@ -3042,9 +3115,9 @@ function renderTabs() {
     var active = id === selectedId ? ' active' : '';
     var archivedCls = (st && st.archived) ? ' archived-tab' : '';
     html += '<div class="tab' + active + archivedCls + '" onclick="selectTab(\'' + id + '\')">'
+         +  '<span class="tab-dot tab-dot-' + esc(status) + '"></span>'
          +  esc(name)
-         +  ' <span class="badge badge-' + esc(status) + '">' + esc(status) + '</span>'
-         +  ' <span class="tab-close" onclick="closeTab(' + JSON.stringify(id) + ', event)" title="Close tab">&times;</span>'
+         +  ' <span class="tab-close" onclick="closeTab(\'' + id + '\', event)" title="Close tab">&times;</span>'
          +  '</div>';
   }
   bar.innerHTML = html;
@@ -3083,11 +3156,6 @@ function buildPanel(id) {
     + '<div class="panel-header">'
     +   '<div class="pipeline-title" id="pTitle"></div>'
     +   '<span class="badge badge-idle" id="pStatusBadge">idle</span>'
-    + '</div>'
-    + '<div class="version-nav" id="versionNav" style="display:none;">'
-    +   '<button class="vn-arrow" id="vnPrev" onclick="navVersion(-1)">&#8249;</button>'
-    +   '<span class="vn-label" id="vnLabel"></span>'
-    +   '<button class="vn-arrow" id="vnNext" onclick="navVersion(+1)">&#8250;</button>'
     + '</div>'
     + '<div class="pipeline-meta" id="pMeta"></div>'
     + '<div class="action-bar" id="actionBar">'
@@ -3283,9 +3351,6 @@ function updatePanel(id) {
     }
   }
 
-  // Version navigator — refresh if vhMembersById is already populated for this run
-  if (vhMembersById[id]) updateVersionNav(id);
-
   var metaEl = document.getElementById('pMeta');
   if (metaEl) {
     var prefix = d.runId ? 'Run: ' + esc(d.runId) : '';
@@ -3455,7 +3520,6 @@ function loadVersionHistory(runId) {
         };
       }
       renderVersionHistory(runId, data.members);
-      updateVersionNav(runId);
     })
     .catch(function() {
       var el = document.getElementById('versionHistory');
@@ -3577,27 +3641,6 @@ function selectOrHydrateRun(runId) {
       maybeAutoExpandVH(runId);
     })
     .catch(function() { showViewError('Network error loading run'); });
-}
-
-function updateVersionNav(runId) {
-  var el = document.getElementById('versionNav');
-  if (!el) return;
-  // runId here is the tab key (familyId); resolve to actual current run ID for lookup.
-  var actualId = (pipelines[runId] && pipelines[runId].id) || runId;
-  var info = vhMembersById[actualId];
-  if (!info || info.totalVersions < 2) { el.style.display = 'none'; return; }
-  el.style.display = '';
-  document.getElementById('vnLabel').textContent = 'v' + info.versionNum + ' of ' + info.totalVersions;
-  document.getElementById('vnPrev').disabled = !info.prevId;
-  document.getElementById('vnNext').disabled = !info.nextId;
-}
-
-function navVersion(delta) {
-  var info = vhMembersById[currentRunId()];
-  if (!info) return;
-  var targetId = delta < 0 ? info.prevId : info.nextId;
-  if (!targetId) return;
-  selectOrHydrateRun(targetId);
 }
 
 // ── Artifact Modal ───────────────────────────────────────────────────────────
@@ -4189,13 +4232,8 @@ var GEN_DELAY_SECS = 3;
 function applyTheme(t) {
   document.documentElement.setAttribute('data-theme', t);
   document.documentElement.style.colorScheme = t;
-  var btn = document.getElementById('themeToggle');
-  if (btn) {
-    var isLight = t === 'light';
-    btn.textContent = isLight ? '\u263e' : '\u2600';
-    btn.setAttribute('aria-label', isLight ? 'Switch to dark theme' : 'Switch to light theme');
-    btn.setAttribute('title',      isLight ? 'Switch to dark theme' : 'Switch to light theme');
-  }
+  var chk = document.getElementById('settingDarkTheme');
+  if (chk) chk.checked = (t === 'dark');
 }
 function toggleTheme() {
   var cur = document.documentElement.getAttribute('data-theme') || 'dark';

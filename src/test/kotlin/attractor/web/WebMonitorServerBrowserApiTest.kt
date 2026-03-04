@@ -17,7 +17,6 @@ class WebMonitorServerBrowserApiTest : FunSpec({
     var port = 0
     var store: RunStore? = null
     var tmpDb: java.io.File? = null
-    var registry: PipelineRegistry? = null
     val client = HttpClient.newHttpClient()
     val testRunId = "browser-api-test-run"
 
@@ -25,7 +24,6 @@ class WebMonitorServerBrowserApiTest : FunSpec({
         tmpDb = Files.createTempFile("browser-api-test-", ".db").toFile()
         store = SqliteRunStore(tmpDb!!.absolutePath)
         val reg = PipelineRegistry(store!!)
-        registry = reg
         // Pre-register a pipeline for happy-path tests
         reg.register(testRunId, "test.dot", "digraph T { start [shape=Mdiamond] exit [shape=Msquare] start -> exit }", familyId = "browser-api-family-1")
         server = WebMonitorServer(0, reg, store!!)
@@ -180,5 +178,32 @@ class WebMonitorServerBrowserApiTest : FunSpec({
     test("GET / body contains saveClosedTabs helper function (closeable tabs)") {
         val resp = get("/")
         resp.body() shouldContain "saveClosedTabs"
+    }
+
+    // ── Sprint 017: Dashboard layout toggle markup presence ───────────────────
+
+    test("GET / body contains attractor-dashboard-layout localStorage key (layout toggle)") {
+        val resp = get("/")
+        resp.body() shouldContain "attractor-dashboard-layout"
+    }
+
+    test("GET / body contains setDashLayout JS function (layout toggle)") {
+        val resp = get("/")
+        resp.body() shouldContain "setDashLayout"
+    }
+
+    test("GET / body contains dash-layout-toggle CSS class (layout toggle)") {
+        val resp = get("/")
+        resp.body() shouldContain "dash-layout-toggle"
+    }
+
+    test("GET / body contains dashboard-list CSS class (list layout)") {
+        val resp = get("/")
+        resp.body() shouldContain "dashboard-list"
+    }
+
+    test("GET / body contains buildDashList JS function (list layout)") {
+        val resp = get("/")
+        resp.body() shouldContain "buildDashList"
     }
 })
