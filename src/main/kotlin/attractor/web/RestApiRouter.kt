@@ -417,7 +417,10 @@ class RestApiRouter(
         }
         val (deleted, logsRoot) = registry.delete(id)
         if (logsRoot.isNotBlank()) {
-            runCatching { java.io.File(logsRoot).deleteRecursively() }
+            val lrFile = java.io.File(logsRoot)
+            runCatching { lrFile.deleteRecursively() }
+            lrFile.parentFile?.listFiles { f -> f.name.startsWith(lrFile.name + "-restart-") }
+                ?.forEach { runCatching { it.deleteRecursively() } }
         }
         jsonResponse(ex, 200, """{"deleted":$deleted}""")
     }

@@ -420,7 +420,12 @@ class WebMonitorServer(private val requestedPort: Int, private val registry: Pip
                         return@createContext
                     }
                     val (deleted, logsRoots) = registry.deleteFamily(familyId)
-                    logsRoots.forEach { lr -> runCatching { java.io.File(lr).deleteRecursively() } }
+                    logsRoots.forEach { lr ->
+                        val lrFile = java.io.File(lr)
+                        runCatching { lrFile.deleteRecursively() }
+                        lrFile.parentFile?.listFiles { f -> f.name.startsWith(lrFile.name + "-restart-") }
+                            ?.forEach { runCatching { it.deleteRecursively() } }
+                    }
                     broadcastUpdate()
                     println("[attractor] Pipeline family deleted: $familyId (${logsRoots.size} runs)")
                     val resp = """{"deleted":$deleted}""".toByteArray()
@@ -446,7 +451,10 @@ class WebMonitorServer(private val requestedPort: Int, private val registry: Pip
                     }
                     val (deleted, logsRoot) = registry.delete(id)
                     if (deleted && logsRoot.isNotBlank()) {
-                        runCatching { java.io.File(logsRoot).deleteRecursively() }
+                        val lrFile = java.io.File(logsRoot)
+                        runCatching { lrFile.deleteRecursively() }
+                        lrFile.parentFile?.listFiles { f -> f.name.startsWith(lrFile.name + "-restart-") }
+                            ?.forEach { runCatching { it.deleteRecursively() } }
                     }
                     broadcastUpdate()
                     println("[attractor] Pipeline deleted: $id (logsRoot=${logsRoot.ifBlank { "none" }})")
