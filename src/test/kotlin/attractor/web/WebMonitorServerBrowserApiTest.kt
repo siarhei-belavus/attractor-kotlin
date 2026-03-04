@@ -310,9 +310,9 @@ class WebMonitorServerBrowserApiTest : FunSpec({
         resp.body() shouldContain "inner-tab-btn"
     }
 
-    test("GET / body contains details-mode CSS class") {
+    test("GET / body contains runs-layout CSS class") {
         val resp = get("/")
-        resp.body() shouldContain "details-mode"
+        resp.body() shouldContain "runs-layout"
     }
 
     test("GET /api/projects response body contains logsRoot key") {

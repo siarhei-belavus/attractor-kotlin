@@ -2271,14 +2271,14 @@ header h1 { font-size: 1.05rem; font-weight: 600; color: var(--text-strong); fle
 .tab-empty { padding: 10px 16px; font-size: 0.78rem; color: var(--text-faint); font-style: italic; align-self: center; }
 .tab-close { margin-left: 4px; opacity: 0.45; font-size: 0.85rem; line-height: 1; padding: 1px 3px; border-radius: 3px; cursor: pointer; flex-shrink: 0; }
 .tab-close:hover { opacity: 1; background: rgba(128,128,128,0.25); }
-.tab-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
-.tab-dot-idle      { background: radial-gradient(circle at 35% 32%, #b0b8c4, #6e7681 55%, #3a3f47); box-shadow: 0 1px 3px rgba(0,0,0,0.5), inset 0 -1px 2px rgba(0,0,0,0.3); opacity: 0.7; }
-.tab-dot-running   { background: radial-gradient(circle at 35% 32%, #ffb89a, #f78166 50%, #a03010); box-shadow: 0 1px 4px rgba(247,129,102,0.7), inset 0 -1px 2px rgba(0,0,0,0.25); animation: tab-dot-blink 1s ease-in-out infinite; }
-.tab-dot-completed { background: radial-gradient(circle at 35% 32%, #80ffaa, #34d058 50%, #137a2e); box-shadow: 0 1px 4px rgba(0,220,80,0.65), inset 0 -1px 2px rgba(0,0,0,0.25); }
-.tab-dot-failed    { background: radial-gradient(circle at 35% 32%, #ff9090, #f85149 50%, #a01020); box-shadow: 0 1px 4px rgba(248,60,60,0.65), inset 0 -1px 2px rgba(0,0,0,0.25); }
-.tab-dot-cancelled { background: radial-gradient(circle at 35% 32%, #ff9090, #f85149 50%, #a01020); box-shadow: 0 1px 4px rgba(248,60,60,0.5), inset 0 -1px 2px rgba(0,0,0,0.25); opacity: 0.7; }
-.tab-dot-paused    { background: radial-gradient(circle at 35% 32%, #ffe066, #e3b341 50%, #8a6200); box-shadow: 0 1px 4px rgba(220,160,0,0.55), inset 0 -1px 2px rgba(0,0,0,0.25); opacity: 0.85; }
-@keyframes tab-dot-blink { 0%,100% { opacity: 1; } 50% { opacity: 0.2; } }
+.tab-status-icon { font-style: normal; font-size: 1em; flex-shrink: 0; line-height: 1; }
+.tab-status-icon.running { animation: spin 1.1s linear infinite; display: inline-block; }
+.tab-si-idle      { color: var(--text-faint); }
+.tab-si-running   { color: var(--badge-running-fg); }
+.tab-si-completed { color: var(--badge-completed-fg); }
+.tab-si-failed    { color: var(--badge-failed-fg); }
+.tab-si-cancelled { color: var(--text-muted); }
+.tab-si-paused    { color: var(--accent); }
 
 /* Badge */
 .badge { display: inline-flex; align-items: center; gap: 5px; padding: 2px 7px; border-radius: 10px; font-size: 0.65rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
@@ -2292,11 +2292,15 @@ header h1 { font-size: 1.05rem; font-weight: 600; color: var(--text-strong); fle
 .pulse { animation: pulse 1.4s infinite; }
 
 /* Main content */
-main { max-width: 1200px; margin: 0 auto; padding: 20px; display: grid; grid-template-columns: 1fr 340px; gap: 20px; }
+main { max-width: 1200px; margin: 0 auto; padding: 20px; display: block; }
+.runs-layout { display: flex; gap: 20px; align-items: flex-start; }
+.runs-main { flex: 1; min-width: 0; }
 .card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 18px; }
 .card h2 { font-size: 0.75rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 14px; }
-.panel-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 4px; }
-.project-title { font-size: 1.4rem; font-weight: 700; color: var(--text-strong); word-break: break-word; }
+.panel-header { display: flex; align-items: center; gap: 12px; margin-bottom: 4px; }
+.project-title { font-size: 1.4rem; font-weight: 700; color: var(--text-strong); word-break: break-word; display: flex; align-items: center; gap: 8px; }
+.status-icon { font-style: normal; font-size: 1.1rem; flex-shrink: 0; line-height: 1; }
+.status-icon.running { animation: spin 1.1s linear infinite; display: inline-block; }
 .project-meta  { font-size: 0.78rem; color: var(--text-faint); margin-bottom: 0; }
 .action-bar { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 10px 0; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); margin: 14px 0 18px; min-height: 42px; }
 .action-bar-primary { display: flex; gap: 8px; align-items: center; }
@@ -2330,9 +2334,6 @@ main { max-width: 1200px; margin: 0 auto; padding: 20px; display: grid; grid-tem
 [data-theme="light"] .stage-log-btn.active { background: #e1f0f5; border-color: #2dadca88; color: #006876; }
 .stage-log-inline { border-top: 1px solid var(--surface-muted); }
 .stage-log-pre { margin: 0; background: var(--code-bg); color: var(--code-text); font-family: 'Consolas','Cascadia Code','Courier New',monospace; font-size: 0.72rem; line-height: 1.6; max-height: 320px; overflow-y: auto; white-space: pre-wrap; word-break: break-all; padding: 10px 13px; border-radius: 0 0 5px 5px; }
-.log-panel  { font-family: 'Consolas', 'Cascadia Code', 'Courier New', monospace; font-size: 0.72rem; line-height: 1.7; flex: 1; min-height: 0; overflow-y: auto; background: var(--code-bg); border-radius: 4px; padding: 12px; }
-.log-line   { color: var(--text-faint); border-bottom: 1px solid rgba(33,38,45,0.2); padding: 1px 0; word-break: break-all; }
-.log-line:last-child { color: var(--text); border-bottom: none; }
 .empty-note { color: var(--text-faint); font-size: 0.82rem; padding: 4px 0; }
 .no-project { grid-column: 1 / -1; text-align: center; padding: 60px 20px; color: var(--text-faint); }
 .no-project h2 { font-size: 1.1rem; margin-bottom: 8px; color: var(--text-muted); }
@@ -2393,18 +2394,18 @@ main { max-width: 1200px; margin: 0 auto; padding: 20px; display: grid; grid-tem
 .dash-lt-btn.active { background: #1c2d3e; color: #79c0ff; }
 [data-theme="light"] .dash-lt-btn.active { background: #e1f0f5; color: #006876; }
 .dashboard-list { display: flex; flex-direction: column; gap: 4px; }
-.dash-list-row { display: grid; grid-template-columns: 84px 1fr 80px 160px 64px 150px 52px; align-items: center; column-gap: 10px; padding: 9px 14px; background: var(--surface); border: 1px solid var(--border); border-radius: 6px; cursor: pointer; overflow: hidden; position: relative; transition: border-color 0.12s; }
+.dash-list-row { display: grid; grid-template-columns: 1fr 80px 160px 1fr 52px; align-items: center; column-gap: 10px; padding: 9px 14px; background: var(--surface); border: 1px solid var(--border); border-radius: 6px; cursor: pointer; overflow: hidden; position: relative; transition: border-color 0.12s; }
 .dash-list-row:hover { border-color: #388bfd; }
 .dash-lr-status-bar { position: absolute; left: 0; top: 0; bottom: 0; width: 3px; }
-.dash-list-row .badge { width: 84px; justify-content: center; box-sizing: border-box; }
+.dash-status-icon { font-style: normal; font-size: 1em; line-height: 1; flex-shrink: 0; }
+.dash-status-icon.running { animation: spin 1.1s linear infinite; display: inline-block; }
 .dash-lr-name { display: flex; align-items: center; gap: 6px; overflow: hidden; min-width: 0; }
 .dash-lr-name-text { flex: 1; font-size: 0.9rem; font-weight: 600; color: var(--text-strong); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
 .dash-lr-progress { height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; }
 .dash-lr-stage-label { font-size: 0.78rem; color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.dash-list-row .dash-elapsed { text-align: right; }
 .dash-lr-meta { font-size: 0.7rem; color: var(--text-faint); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .dash-lr-actions { display: flex; justify-content: flex-end; align-items: center; gap: 4px; }
-@media (max-width: 700px) { .dash-list-row { grid-template-columns: 84px 1fr 52px; } .dash-lr-progress, .dash-lr-stage-label, .dash-list-row .dash-elapsed, .dash-lr-meta { display: none; } }
+@media (max-width: 700px) { .dash-list-row { grid-template-columns: 1fr 52px; } .dash-lr-progress, .dash-lr-stage-label, .dash-lr-meta { display: none; } }
 .dash-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; cursor: pointer; overflow: hidden; display: flex; flex-direction: column; transition: border-color 0.12s, box-shadow 0.12s; }
 .dash-card:hover { border-color: #388bfd; box-shadow: 0 0 0 1px #388bfd22; }
 @keyframes dash-card-glow { 0% { box-shadow: 0 0 0px #238636; } 30% { box-shadow: 0 0 14px 3px #3fb950; } 100% { box-shadow: 0 0 0px #238636; } }
@@ -2426,8 +2427,7 @@ main { max-width: 1200px; margin: 0 auto; padding: 20px; display: grid; grid-tem
 .dash-card-action-btn.del { background: #da3633; color: #fff; }
 .dash-card-action-btn.del:hover { background: #f85149; }
 .dash-sim-badge { font-size: 0.6rem; background: #1c2d3e; color: #79c0ff; padding: 2px 6px; border-radius: 3px; white-space: nowrap; flex-shrink: 0; font-weight: 600; letter-spacing: 0.04em; }
-.dash-status-row { display: flex; align-items: center; justify-content: space-between; }
-.dash-elapsed { font-family: 'Consolas','Cascadia Code',monospace; font-size: 0.88rem; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--text-muted); }
+.dash-elapsed { font-family: 'Consolas','Cascadia Code',monospace; font-size: inherit; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--text-muted); }
 .dash-elapsed.s-running { color: #e3b341; }
 .dash-elapsed.s-paused { color: #d29922; }
 .dash-elapsed.s-failed { color: #f85149; }
@@ -2485,7 +2485,6 @@ main { max-width: 1200px; margin: 0 auto; padding: 20px; display: grid; grid-tem
 .details-meta-table td { padding:4px 0;vertical-align:top; }
 .details-meta-label { width:110px;color:var(--text-muted);font-weight:500;white-space:nowrap;padding-right:12px; }
 .details-meta-value { color:var(--text); }
-main.details-mode { grid-template-columns:1fr; }
 
 /* Git tab */
 .git-tab-header { display:flex;align-items:center;justify-content:space-between;gap:8px;padding:7px 12px;margin:0 0 12px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;font-size:0.8rem;color:var(--text-muted); }
@@ -2586,11 +2585,6 @@ main.details-mode { grid-template-columns:1fr; }
 .graph-loading { color: #888; font-size: 0.82rem; text-align: center; }
 .graph-error { color: #c0392b; font-size: 0.78rem; font-family: monospace; white-space: pre-wrap; word-break: break-word; text-align: center; max-width: 480px; }
 
-/* Right-panel tabs (Log / Graph) */
-.right-panel-tabs { display: flex; gap: 2px; margin-bottom: 14px; border-bottom: 1px solid var(--border); padding-bottom: 10px; align-items: center; }
-.right-tab-btn { background: transparent; border: none; color: var(--text-muted); padding: 4px 12px; border-radius: 5px; font-size: 0.75rem; font-weight: 600; cursor: pointer; text-transform: uppercase; letter-spacing: 0.07em; }
-.right-tab-btn:hover { background: var(--surface-muted); color: var(--text); }
-.right-tab-btn.active { background: var(--surface-muted); color: var(--text-strong); }
 
 /* Project graph panel (monitor view) */
 .project-graph-view { overflow: auto; flex: 1; min-height: 0; background: var(--graph-bg); border-radius: 4px; cursor: grab; }
@@ -2634,9 +2628,7 @@ input:checked + .toggle-slider:before { transform:translateX(20px); }
 [data-theme="light"] .stage.retrying   { border-color: #d97706; }
 [data-theme="light"] .stage.diagnosing { border-color: #d97706; }
 [data-theme="light"] .stage.repairing  { border-color: #1f6feb; }
-[data-theme="light"] .stage-log-btn.active { background: #ede9fe; border-color: #4f46e566; color: #4338ca; }
-[data-theme="light"] .log-line { border-bottom-color: rgba(0,0,0,0.05); }
-[data-theme="light"] .project-graph-error { color: #dc2626; }
+[data-theme="light"] .stage-log-btn.active { background: #ede9fe; border-color: #4f46e566; color: #4338ca; }[data-theme="light"] .project-graph-error { color: #dc2626; }
 [data-theme="light"] .dash-elapsed { color: #7c3aed; }
 [data-theme="light"] .dot-textarea { background: #ffffff; color: #18181b; }
 [data-theme="light"] .dot-textarea::placeholder { color: #71717a; }
@@ -2927,7 +2919,6 @@ var _storedLayout; try { _storedLayout = localStorage.getItem('attractor-dashboa
 var dashLayout = (_storedLayout === 'list') ? 'list' : 'card';
 var panelBuiltFor = null;  // which id the main panel DOM was built for
 var innerTab = 'runs';     // 'runs' | 'details' — active project inner tab
-var logRenderedCount = {}; // id -> number of log lines already appended to DOM
 var elapsedTimer = null;   // interval that ticks the elapsed counter every second
 var dashboardTimer = null; // interval that ticks elapsed counters on the dashboard
 var stageErrors = {};      // stageIndex -> full error string for the selected project
@@ -3071,6 +3062,10 @@ function dashProjectData(id) {
   var effectiveDone = (status === 'completed') ? totalStages : doneStages;
   var completedPrefix = (status === 'completed' && totalStages > 0) ? '\u2713\u2002' : '';
   var stageCountStr = totalStages > 0 ? completedPrefix + effectiveDone + '\u2009/\u2009' + totalStages + ' stages' : '';
+  var _dashIconMap = { idle:'\u25cb', running:'\u27f3', completed:'\u2713', failed:'\u2717', cancelled:'\u2715', paused:'\u23f8' };
+  var _glyph = _dashIconMap[status] || _dashIconMap.idle;
+  var _spinCls = status === 'running' ? ' running' : '';
+  var statusIcon = '<span class="dash-status-icon tab-si-' + status + _spinCls + '">' + _glyph + '</span>';
   var simBadge = p.simulate ? '<span class="dash-sim-badge">SIM</span>' : '';
   var isTerminal = (status === 'completed' || status === 'failed' || status === 'cancelled');
   var cardActions = isTerminal
@@ -3081,7 +3076,8 @@ function dashProjectData(id) {
     : '';
   return { status: status, sc: sc, name: name, pct: pct, stageLabel: stageLabel,
            elapsedStr: elapsedStr, startedStr: startedStr, stageCountStr: stageCountStr,
-           simBadge: simBadge, isTerminal: isTerminal, cardActions: cardActions };
+           simBadge: simBadge, isTerminal: isTerminal, cardActions: cardActions,
+           statusIcon: statusIcon };
 }
 
 function buildDashCards(visibleIds) {
@@ -3089,19 +3085,17 @@ function buildDashCards(visibleIds) {
   for (var i = 0; i < visibleIds.length; i++) {
     var id = visibleIds[i];
     var d = dashProjectData(id);
+    var elapsedSpanC = d.elapsedStr ? '<span class="dash-elapsed ' + d.sc + '" id="dash-elapsed-' + id + '" data-project-id="' + id + '">' + d.elapsedStr + '</span>' : '';
+    var stageTimeStrC = d.stageCountStr ? d.stageCountStr + (elapsedSpanC ? ' in\u00a0' + elapsedSpanC : '') : elapsedSpanC;
     cards += '<div class="dash-card" id="dash-card-' + id + '" onclick="selectTab(\'' + id + '\')">'
       + '<div class="dash-card-top ' + d.sc + '"></div>'
       + '<div class="dash-card-body">'
-      +   '<div class="dash-card-title-row"><span class="dash-card-name">' + d.name + '</span>' + d.simBadge + d.cardActions + '</div>'
-      +   '<div class="dash-status-row">'
-      +     '<span class="badge badge-' + esc(d.status) + '">' + esc(d.status) + '</span>'
-      +     '<span class="dash-elapsed ' + d.sc + '" id="dash-elapsed-' + id + '" data-project-id="' + id + '">' + d.elapsedStr + '</span>'
-      +   '</div>'
+      +   '<div class="dash-card-title-row">' + d.statusIcon + '<span class="dash-card-name">' + d.name + '</span>' + d.simBadge + d.cardActions + '</div>'
       +   '<div class="dash-progress-track"><div class="dash-progress-fill ' + d.sc + '" style="width:' + d.pct + '%"></div></div>'
       +   '<div class="dash-stage-label">' + d.stageLabel + '</div>'
       + '</div>'
       + '<div class="dash-card-footer">'
-      +   '<span class="dash-stage-count">' + d.stageCountStr + '</span>'
+      +   '<span class="dash-stage-count">' + stageTimeStrC + '</span>'
       +   '<span class="dash-started">' + d.startedStr + '</span>'
       + '</div>'
       + '</div>';
@@ -3114,14 +3108,14 @@ function buildDashList(visibleIds) {
   for (var i = 0; i < visibleIds.length; i++) {
     var id = visibleIds[i];
     var d = dashProjectData(id);
-    var metaStr = d.stageCountStr + (d.stageCountStr && d.startedStr ? ' \u00b7 ' : '') + d.startedStr;
+    var elapsedSpanL = d.elapsedStr ? '<span class="dash-elapsed ' + d.sc + '" id="dash-elapsed-' + id + '" data-project-id="' + id + '">' + d.elapsedStr + '</span>' : '';
+    var stageTimeStrL = d.stageCountStr ? d.stageCountStr + (elapsedSpanL ? ' in\u00a0' + elapsedSpanL : '') : elapsedSpanL;
+    var metaStr = stageTimeStrL + (stageTimeStrL && d.startedStr ? ' \u00b7 ' : '') + d.startedStr;
     html += '<div class="dash-list-row" onclick="selectTab(' + JSON.stringify(id) + ')">'
       + '<div class="dash-lr-status-bar ' + d.sc + '"></div>'
-      + '<span class="badge badge-' + esc(d.status) + '">' + esc(d.status) + '</span>'
-      + '<div class="dash-lr-name"><span class="dash-lr-name-text">' + d.name + '</span>' + d.simBadge + '</div>'
+      + '<div class="dash-lr-name">' + d.statusIcon + '<span class="dash-lr-name-text">' + d.name + '</span>' + d.simBadge + '</div>'
       + '<div class="dash-lr-progress"><div class="dash-progress-fill ' + d.sc + '" style="width:' + d.pct + '%"></div></div>'
       + '<span class="dash-lr-stage-label">' + d.stageLabel + '</span>'
-      + '<span class="dash-elapsed ' + d.sc + '" id="dash-elapsed-' + id + '" data-project-id="' + id + '">' + d.elapsedStr + '</span>'
       + '<span class="dash-lr-meta">' + metaStr + '</span>'
       + '<div class="dash-lr-actions">' + d.cardActions + '</div>'
       + '</div>';
@@ -3203,7 +3197,7 @@ function closeTab(id, event) {
   event.stopPropagation();
   closedTabs[id] = true;
   saveClosedTabs();
-  delete logRenderedCount[id]; delete graphSigFor[id]; delete graphRenderGen[id];
+  delete graphSigFor[id]; delete graphRenderGen[id];
   if (selectedId === id) {
     selectedId = DASHBOARD_TAB_ID;
     try { localStorage.setItem('attractor-selected-tab', DASHBOARD_TAB_ID); } catch(e){}
@@ -3222,6 +3216,14 @@ function renderTabs() {
   });
   var dashActive = selectedId === DASHBOARD_TAB_ID ? ' active' : '';
   var html = '<div class="tab dash-tab' + dashActive + '" onclick="selectTab(DASHBOARD_TAB_ID)">&#128202; Dashboard</div>';
+  var tabIconMap = {
+    idle:      '\u25cb',
+    running:   '\u27f3',
+    completed: '\u2713',
+    failed:    '\u2717',
+    cancelled: '\u2715',
+    paused:    '\u23f8'
+  };
   for (var i = 0; i < visibleIds.length; i++) {
     var id = visibleIds[i];
     var p = projects[id];
@@ -3230,8 +3232,10 @@ function renderTabs() {
     var status = (st && st.status) ? st.status : 'idle';
     var active = id === selectedId ? ' active' : '';
     var archivedCls = (st && st.archived) ? ' archived-tab' : '';
+    var glyph = tabIconMap[status] || tabIconMap.idle;
+    var spinCls = status === 'running' ? ' running' : '';
     html += '<div class="tab' + active + archivedCls + '" onclick="selectTab(\'' + id + '\')">'
-         +  '<span class="tab-dot tab-dot-' + esc(status) + '"></span>'
+         +  '<span class="tab-status-icon tab-si-' + esc(status) + spinCls + '">' + glyph + '</span>'
          +  esc(name)
          +  ' <span class="tab-close" onclick="closeTab(\'' + id + '\', event)" title="Close tab">&times;</span>'
          +  '</div>';
@@ -3322,7 +3326,6 @@ function buildPanel(id) {
   clearInterval(stageLogTimer); stageLogTimer = null;
   stageLogNodeId = null; stageLogContent = '';
   panelBuiltFor = id;
-  logRenderedCount[id] = 0;
   gitPanelExpanded = false;
   window._gitData = null;
   // Reset version history state on tab switch
@@ -3336,8 +3339,7 @@ function buildPanel(id) {
   var sharedHeader =
     '<div id="panelLeft">'
     + '<div class="panel-header">'
-    +   '<div class="project-title" id="pTitle"></div>'
-    +   '<span class="badge badge-idle" id="pStatusBadge">idle</span>'
+    +   '<div class="project-title"><em class="status-icon" id="pStatusIcon">\u25cb</em><span id="pTitle"></span></div>'
     + '</div>'
     + '<div class="project-meta" id="pMeta"></div>'
     + '<div class="inner-tab-bar">'
@@ -3347,10 +3349,9 @@ function buildPanel(id) {
     + '</div>';
 
   var mainContent = '';
-  var rightPanel = '';
 
   if (innerTab === 'details') {
-    // Details scaffold — full width, no right panel
+    // Details scaffold — full width
     mainContent = sharedHeader
       + '<div class="details-section">'
       +   '<div class="details-section-label">Workspace</div>'
@@ -3361,7 +3362,6 @@ function buildPanel(id) {
       +   '<table class="details-meta-table" id="detailsMetaTable"><tbody></tbody></table>'
       + '</div>'
       + '</div>';
-    // No right panel in Details mode
   } else if (innerTab === 'git') {
     // Git scaffold — full width, expandable commit list
     mainContent = sharedHeader
@@ -3373,10 +3373,11 @@ function buildPanel(id) {
       +   '<div class="git-empty">Loading commits\u2026</div>'
       + '</div>'
       + '</div>';
-    // No right panel in Git mode
   } else {
-    // Runs scaffold — two-column layout with right panel
+    // Runs scaffold — flex layout with right panel inside panelLeft
     mainContent = sharedHeader
+      + '<div class="runs-layout">'
+      + '<div class="runs-main">'
       + '<div class="action-bar" id="actionBar">'
       +   '<div class="action-bar-primary">'
       +     '<button class="btn-cancel-run" id="cancelBtn" style="display:none;" onclick="cancelProject()">&#9632;&ensp;Cancel</button>'
@@ -3402,13 +3403,8 @@ function buildPanel(id) {
       +   '<span class="view-err" id="viewError" style="display:none;"></span>'
       +   '<div class="vh-list" id="vhList" style="display:none;"></div>'
       + '</div>'
-      + '</div>';
-    rightPanel =
-      '<div class="card" id="rightPanel">'
-      +   '<div class="right-panel-tabs">'
-      +     '<button class="right-tab-btn active" id="rightTabGraph" onclick="switchRightPanel(\'graph\')">Graph</button>'
-      +     '<button class="right-tab-btn" id="rightTabLog" onclick="switchRightPanel(\'log\')">Live Log</button>'
-      +   '</div>'
+      + '</div>'  // close runs-main
+      + '<div class="card" id="rightPanel">'
       +   '<div id="graphToolbarRow" class="graph-toolbar-row">'
       +     '<button class="dot-download-btn" onclick="downloadMonitorDot()" title="Download .dot file">&#8675;</button>'
       +     '<div style="flex:1;"></div>'
@@ -3417,18 +3413,14 @@ function buildPanel(id) {
       +     '<button class="graph-zoom-btn" title="Zoom in (or Ctrl+scroll)" onclick="zoomMonitor(1)">+</button>'
       +     '<button class="graph-zoom-btn" title="Reset zoom" onclick="resetMonitorZoom()">&#x21BA;</button>'
       +   '</div>'
-      +   '<div class="log-panel" id="logPanel" style="display:none;"></div>'
       +   '<div class="project-graph-view" id="graphView"><div id="graphViewInner"><div class="project-graph-placeholder">Waiting for project\u2026</div></div></div>'
-      + '</div>';
+      + '</div>'
+      + '</div>'  // close runs-layout
+      + '</div>';  // close panelLeft
   }
 
-  document.getElementById('mainContent').innerHTML = mainContent + rightPanel;
+  document.getElementById('mainContent').innerHTML = mainContent;
 
-  // Apply full-width layout for Details and Git tabs
-  var mainEl = document.getElementById('mainContent');
-  if (mainEl) {
-    mainEl.classList.toggle('details-mode', innerTab === 'details' || innerTab === 'git');
-  }
 
   _applyInnerTabButtons();
   elapsedTimer = setInterval(tickElapsed, 1000);
@@ -3494,11 +3486,21 @@ function updatePanel(id) {
   var titleEl = document.getElementById('pTitle');
   if (titleEl) titleEl.textContent = d.project || p.fileName;
 
-  var statusBadge = document.getElementById('pStatusBadge');
-  if (statusBadge) {
+  var statusIcon = document.getElementById('pStatusIcon');
+  if (statusIcon) {
     var st = d.status || 'idle';
-    statusBadge.className = 'badge badge-' + st;
-    statusBadge.textContent = st;
+    var iconMap = {
+      idle:      { glyph: '\u25cb', color: 'var(--text-faint)' },
+      running:   { glyph: '\u27f3', color: 'var(--badge-running-fg)' },
+      completed: { glyph: '\u2713', color: 'var(--badge-completed-fg)' },
+      failed:    { glyph: '\u2717', color: 'var(--badge-failed-fg)' },
+      cancelled: { glyph: '\u2715', color: 'var(--text-muted)' },
+      paused:    { glyph: '\u23f8', color: 'var(--accent)' }
+    };
+    var ic = iconMap[st] || iconMap.idle;
+    statusIcon.textContent = ic.glyph;
+    statusIcon.style.color = ic.color;
+    statusIcon.className = 'status-icon' + (st === 'running' ? ' running' : '');
   }
 
   var cancelBtn = document.getElementById('cancelBtn');
@@ -3672,25 +3674,7 @@ function updatePanel(id) {
         }
       }
     } else if (d.status === 'failed') {
-      stageList.innerHTML = '<div class="empty-note">Project failed before any stages ran.\u00a0\u00a0'
-        + '<button class="stage-log-btn" onclick="switchRightPanel(\'log\')" style="margin-left:4px;">View Logs</button></div>';
-    }
-  }
-
-  // Logs — append only new lines to preserve scroll position
-  var logPanel = document.getElementById('logPanel');
-  if (logPanel && d.logs && d.logs.length > 0) {
-    var prev = logRenderedCount[id] || 0;
-    if (d.logs.length > prev) {
-      var atBottom = (logPanel.scrollHeight - logPanel.scrollTop) <= (logPanel.clientHeight + 60);
-      for (var j = prev; j < d.logs.length; j++) {
-        var line = document.createElement('div');
-        line.className = 'log-line';
-        line.textContent = d.logs[j];
-        logPanel.appendChild(line);
-      }
-      logRenderedCount[id] = d.logs.length;
-      if (atBottom) logPanel.scrollTop = logPanel.scrollHeight;
+      stageList.innerHTML = '<div class="empty-note">Project failed before any stages ran.</div>';
     }
   }
 
@@ -3709,7 +3693,6 @@ function renderMain() {
   if (selectedId === DASHBOARD_TAB_ID) { renderDashboard(); return; }
   if (!selectedId || !projects[selectedId]) {
     panelBuiltFor = null;
-    mainEl.classList.remove('details-mode');
     mainEl.innerHTML = '<div class="no-project"><h2>No project selected</h2>'
       + '<p>Use <strong>Create</strong> to generate and run a project.</p></div>';
     return;
@@ -4898,21 +4881,6 @@ function collapseStageLog() {
   }
 }
 
-// ── Right-panel tab switcher (Log / Graph) ────────────────────────────────────
-function switchRightPanel(tab) {
-  var isLog = tab === 'log';
-  var logPanel   = document.getElementById('logPanel');
-  var graphView  = document.getElementById('graphView');
-  var btnLog     = document.getElementById('rightTabLog');
-  var btnGraph   = document.getElementById('rightTabGraph');
-  var toolbar    = document.getElementById('graphToolbarRow');
-  if (logPanel)  logPanel.style.display  = isLog ? '' : 'none';
-  if (graphView) graphView.style.display = isLog ? 'none' : '';
-  if (btnLog)    btnLog.classList.toggle('active', isLog);
-  if (btnGraph)  btnGraph.classList.toggle('active', !isLog);
-  if (toolbar)   toolbar.style.display   = isLog ? 'none' : '';
-  if (!isLog && selectedId) renderProjectGraph(selectedId);
-}
 
 // ── Project graph visualization ─────────────────────────────────────────────
 function renderProjectGraph(id) {
