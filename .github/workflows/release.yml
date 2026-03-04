@@ -43,11 +43,11 @@ jobs:
 
       - name: Find server JAR
         id: find-server-jar
-        run: echo "jar_path=$(find build/libs -name 'coreys-attractor-server-*.jar' | grep -v devel | head -1)" >> "$GITHUB_OUTPUT"
+        run: echo "jar_path=$(find build/libs -name 'attractor-server-*.jar' | grep -v devel | head -1)" >> "$GITHUB_OUTPUT"
 
       - name: Find CLI JAR
         id: find-cli-jar
-        run: echo "jar_path=$(find build/libs -name 'coreys-attractor-cli-*.jar' | grep -v devel | head -1)" >> "$GITHUB_OUTPUT"
+        run: echo "jar_path=$(find build/libs -name 'attractor-cli-*.jar' | grep -v devel | head -1)" >> "$GITHUB_OUTPUT"
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2

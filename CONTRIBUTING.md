@@ -1,4 +1,4 @@
-# Contributing to Corey's Attractor
+# Contributing to Attractor
 
 ## Philosophy
 
@@ -22,7 +22,7 @@ Thanks for your interest in contributing! This is a personal learning project, b
 ### Local Setup
 
 ```bash
-git clone https://github.com/coreydaley/coreys-attractor.git
+git clone https://github.com/coreydaley/attractor.git
 cd coreys-attractor
 make build
 make test

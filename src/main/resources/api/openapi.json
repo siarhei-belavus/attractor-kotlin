@@ -1,12 +1,12 @@
 {
   "openapi": "3.0.3",
   "info": {
-    "title": "Corey's Attractor REST API",
-    "description": "Full-featured REST API for the Corey's Attractor pipeline orchestration system. All endpoints are under `/api/v1/`. Existing browser-facing `/api/*` routes continue to work unchanged.\n\n**Authentication**: none (auth is out of scope for v1 — routes are structured to allow middleware insertion in a future sprint).\n\n**Error envelope**: all error responses use `{\"error\":\"...\",\"code\":\"...\"}`.",
+    "title": "Attractor REST API",
+    "description": "Full-featured REST API for the Attractor pipeline orchestration system. All endpoints are under `/api/v1/`. Existing browser-facing `/api/*` routes continue to work unchanged.\n\n**Authentication**: none (auth is out of scope for v1 — routes are structured to allow middleware insertion in a future sprint).\n\n**Error envelope**: all error responses use `{\"error\":\"...\",\"code\":\"...\"}`.",
     "version": "1.0.0",
     "contact": {
-      "name": "Corey's Attractor",
-      "url": "https://github.com/coreydaley/coreys-attractor"
+      "name": "Attractor",
+      "url": "https://github.com/coreydaley/attractor"
     },
     "license": {
       "name": "Apache 2.0",

@@ -105,7 +105,7 @@ class SqliteRunStoreMigrationTest : FunSpec({
         }
     }
 
-    test("logs_root migration: renames logs/ prefix to workspace/") {
+    test("logs_root migration: renames logs/ prefix to projects/") {
         val tmpFile = Files.createTempFile("attractor-logsroot-migrate-test-", ".db").toFile()
         try {
             // Create DB with a legacy logs/ prefix in logs_root
@@ -137,17 +137,17 @@ class SqliteRunStoreMigrationTest : FunSpec({
             val store = SqliteRunStore(tmpFile.absolutePath)
             val run = store.getById("lr-test-1")
             run shouldNotBe null
-            run!!.logsRoot shouldBe "workspace/my-project"
+            run!!.logsRoot shouldBe "projects/my-project"
             store.close()
         } finally {
             tmpFile.delete()
         }
     }
 
-    test("logs_root migration: idempotent for workspace/ entries") {
+    test("logs_root migration: idempotent for projects/ entries") {
         val tmpFile = Files.createTempFile("attractor-logsroot-idempotent-test-", ".db").toFile()
         try {
-            // Create DB with an already-correct workspace/ prefix
+            // Create DB with an already-correct projects/ prefix
             val conn = DriverManager.getConnection("jdbc:sqlite:${tmpFile.absolutePath}")
             conn.createStatement().execute("""
                 CREATE TABLE IF NOT EXISTS project_runs (
@@ -168,14 +168,14 @@ class SqliteRunStoreMigrationTest : FunSpec({
                 )
             """.trimIndent())
             conn.createStatement().execute(
-                "INSERT INTO project_runs (id, file_name, dot_source, status, logs_root, created_at, project_family_id) VALUES ('lr-test-2', 'test.dot', 'digraph G {}', 'completed', 'workspace/my-project', 1000, 'fam-lr2')"
+                "INSERT INTO project_runs (id, file_name, dot_source, status, logs_root, created_at, project_family_id) VALUES ('lr-test-2', 'test.dot', 'digraph G {}', 'completed', 'projects/my-project', 1000, 'fam-lr2')"
             )
             conn.close()
 
             val store = SqliteRunStore(tmpFile.absolutePath)
             val run = store.getById("lr-test-2")
             run shouldNotBe null
-            run!!.logsRoot shouldBe "workspace/my-project"
+            run!!.logsRoot shouldBe "projects/my-project"
             store.close()
         } finally {
             tmpFile.delete()

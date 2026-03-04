@@ -104,7 +104,7 @@ class DocsEndpointTest : FunSpec({
         get("/docs").body() shouldContain "shape=Mdiamond"
     }
 
-    test("GET /docs artifact download section contains workspace/ directory description") {
+    test("GET /docs export section describes artifacts/workspace/ directory") {
         get("/docs").body() shouldContain "workspace/"
     }
 

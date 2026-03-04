@@ -1,6 +1,6 @@
-# Corey's Attractor
+# Attractor
 
-[![CI](https://github.com/coreydaley/coreys-attractor/actions/workflows/ci.yml/badge.svg)](https://github.com/coreydaley/coreys-attractor/actions/workflows/ci.yml) [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
+[![CI](https://github.com/coreydaley/attractor/actions/workflows/ci.yml/badge.svg)](https://github.com/coreydaley/attractor/actions/workflows/ci.yml) [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 
 > **Based on the fantastic work from [StrongDM's Software Factory](https://factory.strongdm.ai/) and the [Attractor project](https://github.com/strongdm/attractor).**
 >
@@ -45,14 +45,14 @@ make run            # start the web interface on port 7070
 |--------|-------------|
 | `make help` | List all available targets and options |
 | `make build` | Compile and assemble the application |
-| `make jar` | Build only the fat JAR (`build/libs/coreys-attractor-*.jar`) |
+| `make jar` | Build only the fat JAR (`build/libs/attractor-server-*.jar`) |
 | `make run` | Run via Gradle — picks up source changes without rebuilding the JAR |
 | `make run-jar` | Build the fat JAR (if needed) and run it directly (faster startup) |
 | `make test` | Run the test suite |
 | `make check` | Run tests and all static checks |
 | `make clean` | Delete all build output |
 | `make dist` | Build distribution archives (`.tar` and `.zip`) |
-| `make cli-jar` | Build the CLI fat JAR (`build/libs/coreys-attractor-cli-devel.jar`) |
+| `make cli-jar` | Build the CLI fat JAR (`build/libs/attractor-cli-devel.jar`) |
 | `make release` | Build versioned server + CLI JARs for distribution |
 | `make install-deps` | Interactively install Java 21 and git using your OS package manager |
 
@@ -83,7 +83,7 @@ export JAVA_HOME=/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home
 ./gradlew jar
 ```
 
-The output jar is written to `build/libs/coreys-attractor-*.jar`.
+The output jar is written to `build/libs/attractor-server-*.jar`.
 
 ## Run
 
@@ -95,7 +95,7 @@ make run-jar       # via the pre-built fat JAR (faster startup)
 Or directly:
 
 ```
-java -jar build/libs/coreys-attractor-1.0.0.jar [options]
+java -jar build/libs/attractor-server-1.0.0.jar [options]
 ```
 
 ### Options
@@ -295,7 +295,7 @@ The `attractor` CLI lets you manage pipelines, artifacts, DOT graphs, settings, 
 make cli-jar
 ```
 
-This produces `build/libs/coreys-attractor-cli-devel.jar`. For a versioned release artifact:
+This produces `build/libs/attractor-cli-devel.jar`. For a versioned release artifact:
 
 ```bash
 make release
@@ -305,7 +305,7 @@ make release
 
 ```bash
 # Via the built JAR directly
-java -jar build/libs/coreys-attractor-cli-devel.jar --help
+java -jar build/libs/attractor-cli-devel.jar --help
 
 # Via the bin/ wrapper (auto-locates the latest CLI JAR)
 bin/attractor --help

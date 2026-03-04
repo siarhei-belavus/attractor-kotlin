@@ -1,5 +1,5 @@
 # =============================================================================
-# coreys-attractor — Makefile
+# attractor — Makefile
 # =============================================================================
 # Gradle 8.7's bundled Kotlin DSL compiler does not support Java 25+.
 # JAVA_HOME is pinned to Java 21 (Homebrew). Override on the command line
@@ -13,7 +13,7 @@ JAVA_HOME ?= /opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home
 export JAVA_HOME
 
 GRADLEW   := ./gradlew
-JAR        = build/libs/coreys-attractor-server-devel.jar
+JAR        = build/libs/attractor-server-devel.jar
 WEB_PORT  ?= 7070
 
 .PHONY: help build test clean run run-jar dev jar cli-jar release dist check install-dev-deps openapi
@@ -21,7 +21,7 @@ WEB_PORT  ?= 7070
 # Default target — show available targets
 help:
 	@echo ""
-	@echo "  coreys-attractor"
+	@echo "  attractor"
 	@echo ""
 	@echo "  make build          Compile and assemble the application"
 	@echo "  make test           Run the test suite"
@@ -29,8 +29,8 @@ help:
 	@echo "  make run            Run via Gradle (auto-reloads classpath)"
 	@echo "  make run-jar        Run the pre-built fat JAR directly"
 	@echo "  make dev            Dev mode: watch src/, rebuild + restart on change (requires entr)"
-	@echo "  make jar            Build server devel JAR  (coreys-attractor-server-devel.jar)"
-	@echo "  make cli-jar        Build CLI devel JAR     (coreys-attractor-cli-devel.jar)"
+	@echo "  make jar            Build server devel JAR  (attractor-server-devel.jar)"
+	@echo "  make cli-jar        Build CLI devel JAR     (attractor-cli-devel.jar)"
 	@echo "  make release        Build versioned server + CLI JARs (git tag or SHA[-dirty])"
 	@echo "  make dist           Build distribution archives (tar + zip)"
 	@echo "  make check          Run tests and static checks"
@@ -76,7 +76,7 @@ release:
 	$(GRADLEW) releaseJar releaseCliJar
 	@echo ""
 	@echo "  Release artifacts:"
-	@ls build/libs/coreys-attractor-server-*.jar build/libs/coreys-attractor-cli-*.jar 2>/dev/null \
+	@ls build/libs/attractor-server-*.jar build/libs/attractor-cli-*.jar 2>/dev/null \
 	  | grep -v -- '-devel' | sed 's/^/    /' || true
 	@echo ""
 

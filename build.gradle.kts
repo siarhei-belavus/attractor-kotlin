@@ -82,7 +82,7 @@ tasks.named("assemble") {
 }
 
 tasks.jar {
-    archiveBaseName.set("coreys-attractor-server-devel")
+    archiveBaseName.set("attractor-server-devel")
     archiveVersion.set("")
     manifest {
         attributes["Main-Class"] = "attractor.MainKt"
@@ -93,7 +93,7 @@ tasks.jar {
 }
 
 tasks.register<Jar>("cliJar") {
-    archiveBaseName.set("coreys-attractor-cli-devel")
+    archiveBaseName.set("attractor-cli-devel")
     archiveVersion.set("")
     manifest {
         attributes["Main-Class"] = "attractor.cli.CliMainKt"
@@ -105,7 +105,7 @@ tasks.register<Jar>("cliJar") {
 }
 
 tasks.register<Jar>("releaseJar") {
-    archiveBaseName.set("coreys-attractor-server")
+    archiveBaseName.set("attractor-server")
     archiveVersion.set(version.toString())
     manifest {
         attributes["Main-Class"] = "attractor.MainKt"
@@ -117,7 +117,7 @@ tasks.register<Jar>("releaseJar") {
 }
 
 tasks.register<Jar>("releaseCliJar") {
-    archiveBaseName.set("coreys-attractor-cli")
+    archiveBaseName.set("attractor-cli")
     archiveVersion.set(version.toString())
     manifest {
         attributes["Main-Class"] = "attractor.cli.CliMainKt"

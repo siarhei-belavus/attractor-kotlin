@@ -2,7 +2,7 @@
 
 ## About This Project
 
-Corey's Attractor is a personal learning project — a Kotlin/JVM DOT-based AI pipeline runner. It is not production software and is not intended for use in critical systems. That said, responsible disclosure of security issues is appreciated and will be taken seriously.
+Attractor is a personal learning project — a Kotlin/JVM DOT-based AI pipeline runner. It is not production software and is not intended for use in critical systems. That said, responsible disclosure of security issues is appreciated and will be taken seriously.
 
 ## Supported Versions
 
