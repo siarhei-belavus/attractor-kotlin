@@ -7,7 +7,8 @@ data class GitCommit(
     val hash: String,
     val shortHash: String,
     val subject: String,
-    val date: String
+    val date: String,
+    val body: String = ""
 )
 
 data class GitSummary(
@@ -153,7 +154,7 @@ object WorkspaceGit {
      * Uses tab-separated log format to avoid conflicts with commit subjects containing pipes.
      * All subprocess calls are non-fatal; degraded [GitSummary] is returned on any error.
      */
-    fun summary(dir: String, recentLimit: Int = 5): GitSummary {
+    fun summary(dir: String, recentLimit: Int = 20): GitSummary {
         if (!gitAvailable) return GitSummary(available = false)
         val f = File(dir)
         if (!File(f, ".git").exists()) return GitSummary(available = true, repoExists = false)
@@ -171,21 +172,24 @@ object WorkspaceGit {
             val commitCountStr = runCatching { run("git", "rev-list", "--count", "HEAD") }.getOrDefault("")
             val commitCount = commitCountStr.toIntOrNull() ?: 0
 
-            // Tab-separated: hash\tshortHash\tsubject\tdate — tabs don't appear in our commit messages
-            fun parseCommit(line: String): GitCommit? {
-                val parts = line.split("\t")
+            // Fields separated by ASCII unit-separator (\u001f), commits terminated by null byte (\u0000).
+            // Using %x1f/%x00 git escape sequences so no shell is involved.
+            // Body (%b) may be empty or multi-line; trim() normalises trailing newlines.
+            fun parseCommit(block: String): GitCommit? {
+                val parts = block.split("\u001f", limit = 5)
                 if (parts.size < 4) return null
                 return GitCommit(
-                    hash = parts[0],
+                    hash = parts[0].trim(),
                     shortHash = parts[1],
                     subject = parts[2],
-                    date = parts[3]
+                    date = parts[3],
+                    body = if (parts.size >= 5) parts[4].trim() else ""
                 )
             }
 
             val lastCommit = if (commitCount > 0) {
                 runCatching {
-                    parseCommit(run("git", "log", "-1", "--format=%H\t%h\t%s\t%ai"))
+                    parseCommit(run("git", "log", "-1", "--format=%H%x1f%h%x1f%s%x1f%ai%x1f%b"))
                 }.getOrNull()
             } else null
 
@@ -201,8 +205,8 @@ object WorkspaceGit {
 
             val recent = if (commitCount > 0) {
                 runCatching {
-                    run("git", "log", "--format=%H\t%h\t%s\t%ai", "-$recentLimit")
-                        .lines()
+                    run("git", "log", "--format=%H%x1f%h%x1f%s%x1f%ai%x1f%b%x00", "-$recentLimit")
+                        .split("\u0000")
                         .filter { it.isNotBlank() }
                         .mapNotNull { parseCommit(it) }
                 }.getOrDefault(emptyList())
