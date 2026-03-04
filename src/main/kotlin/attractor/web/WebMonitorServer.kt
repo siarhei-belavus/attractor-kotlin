@@ -2234,7 +2234,7 @@ header h1 { font-size: 1.05rem; font-weight: 600; color: var(--text-strong); fle
 .tab-close:hover { opacity: 1; background: rgba(128,128,128,0.25); }
 .tab-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
 .tab-dot-idle      { background: radial-gradient(circle at 35% 32%, #b0b8c4, #6e7681 55%, #3a3f47); box-shadow: 0 1px 3px rgba(0,0,0,0.5), inset 0 -1px 2px rgba(0,0,0,0.3); opacity: 0.7; }
-.tab-dot-running   { background: radial-gradient(circle at 35% 32%, #80ffaa, #34d058 50%, #137a2e); box-shadow: 0 1px 4px rgba(0,220,80,0.7), inset 0 -1px 2px rgba(0,0,0,0.25); animation: tab-dot-blink 1s ease-in-out infinite; }
+.tab-dot-running   { background: radial-gradient(circle at 35% 32%, #ffb89a, #f78166 50%, #a03010); box-shadow: 0 1px 4px rgba(247,129,102,0.7), inset 0 -1px 2px rgba(0,0,0,0.25); animation: tab-dot-blink 1s ease-in-out infinite; }
 .tab-dot-completed { background: radial-gradient(circle at 35% 32%, #80ffaa, #34d058 50%, #137a2e); box-shadow: 0 1px 4px rgba(0,220,80,0.65), inset 0 -1px 2px rgba(0,0,0,0.25); }
 .tab-dot-failed    { background: radial-gradient(circle at 35% 32%, #ff9090, #f85149 50%, #a01020); box-shadow: 0 1px 4px rgba(248,60,60,0.65), inset 0 -1px 2px rgba(0,0,0,0.25); }
 .tab-dot-cancelled { background: radial-gradient(circle at 35% 32%, #ff9090, #f85149 50%, #a01020); box-shadow: 0 1px 4px rgba(248,60,60,0.5), inset 0 -1px 2px rgba(0,0,0,0.25); opacity: 0.7; }
@@ -2354,16 +2354,22 @@ main { max-width: 1200px; margin: 0 auto; padding: 20px; display: grid; grid-tem
 .dash-lt-btn.active { background: #1c2d3e; color: #79c0ff; }
 [data-theme="light"] .dash-lt-btn.active { background: #e1f0f5; color: #006876; }
 .dashboard-list { display: flex; flex-direction: column; gap: 4px; }
-.dash-list-row { display: flex; align-items: center; gap: 10px; padding: 9px 14px; background: var(--surface); border: 1px solid var(--border); border-radius: 6px; cursor: pointer; overflow: hidden; position: relative; transition: border-color 0.12s; }
+.dash-list-row { display: grid; grid-template-columns: 84px 1fr 80px 160px 64px 150px 52px; align-items: center; column-gap: 10px; padding: 9px 14px; background: var(--surface); border: 1px solid var(--border); border-radius: 6px; cursor: pointer; overflow: hidden; position: relative; transition: border-color 0.12s; }
 .dash-list-row:hover { border-color: #388bfd; }
-.dash-lr-status-bar { position: absolute; left: 0; top: 0; bottom: 0; width: 3px; flex-shrink: 0; }
-.dash-lr-name { flex: 1; font-size: 0.9rem; font-weight: 600; color: var(--text-strong); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
-.dash-lr-progress { width: 80px; flex-shrink: 0; height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; }
-.dash-lr-stage-label { width: 160px; flex-shrink: 0; font-size: 0.78rem; color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.dash-lr-meta { font-size: 0.7rem; color: var(--text-faint); white-space: nowrap; flex-shrink: 0; }
-@media (max-width: 700px) { .dash-lr-progress, .dash-lr-stage-label, .dash-lr-meta { display: none; } }
+.dash-lr-status-bar { position: absolute; left: 0; top: 0; bottom: 0; width: 3px; }
+.dash-list-row .badge { width: 84px; justify-content: center; box-sizing: border-box; }
+.dash-lr-name { display: flex; align-items: center; gap: 6px; overflow: hidden; min-width: 0; }
+.dash-lr-name-text { flex: 1; font-size: 0.9rem; font-weight: 600; color: var(--text-strong); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.dash-lr-progress { height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; }
+.dash-lr-stage-label { font-size: 0.78rem; color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dash-list-row .dash-elapsed { text-align: right; }
+.dash-lr-meta { font-size: 0.7rem; color: var(--text-faint); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dash-lr-actions { display: flex; justify-content: flex-end; align-items: center; gap: 4px; }
+@media (max-width: 700px) { .dash-list-row { grid-template-columns: 84px 1fr 52px; } .dash-lr-progress, .dash-lr-stage-label, .dash-list-row .dash-elapsed, .dash-lr-meta { display: none; } }
 .dash-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; cursor: pointer; overflow: hidden; display: flex; flex-direction: column; transition: border-color 0.12s, box-shadow 0.12s; }
 .dash-card:hover { border-color: #388bfd; box-shadow: 0 0 0 1px #388bfd22; }
+@keyframes dash-card-glow { 0% { box-shadow: 0 0 0px #238636; } 30% { box-shadow: 0 0 14px 3px #3fb950; } 100% { box-shadow: 0 0 0px #238636; } }
+.dash-card-flash { animation: dash-card-glow 0.9s ease-out forwards; }
 .dash-card-top { height: 3px; flex-shrink: 0; }
 .dash-card-top.s-running { background: #f78166; }
 .dash-card-top.s-completed { background: #238636; }
@@ -2569,7 +2575,7 @@ input:checked + .toggle-slider:before { transform:translateX(20px); }
 <header>
   <h1><a href="#" onclick="showView('monitor');selectTab(DASHBOARD_TAB_ID);return false;" style="color:inherit;text-decoration:none;">&#9889; Corey's Attractor</a></h1>
   <nav style="display:flex;gap:3px;">
-    <button class="nav-btn active" id="navMonitor" onclick="showView('monitor')">Monitor</button>
+    <button class="nav-btn active" id="navMonitor" onclick="showView('monitor')">&#128421;&#65039; Monitor</button>
     <button class="nav-btn" id="navCreate" onclick="showView('create')">🚀 Create</button>
     <button class="nav-btn" onclick="openImportModal()">&#128229; Import</button>
     <button class="nav-btn" id="navArchived" onclick="showView('archived')">&#128193; Archived</button>
@@ -2829,6 +2835,7 @@ var stageLogNodeId = null;  // nodeId of the currently-expanded inline stage log
 var stageLogContent = '';   // last fetched log text for the expanded stage
 var graphSigFor = {};       // id -> last stage-status signature used to render the graph
 var graphRenderGen = {};    // id -> render generation; stale in-flight responses are discarded
+var prevStatuses = {};      // id -> last observed pipeline status (for completion flash detection)
 
 var ICONS = { running: '&#9889;', completed: '&#10003;', failed: '&#10007;', retrying: '&#8635;', diagnosing: '&#128269;', repairing: '&#9874;', pending: '&middot;' };
 
@@ -2871,6 +2878,13 @@ function startDashboardTimer() {
 
 function stopDashboardTimer() {
   clearInterval(dashboardTimer); dashboardTimer = null;
+}
+
+function flashDashCard(id) {
+  var el = document.getElementById('dash-card-' + id);
+  if (!el) return;
+  el.classList.add('dash-card-flash');
+  setTimeout(function() { el.classList.remove('dash-card-flash'); }, 900);
 }
 
 function getDashStageLabel(p) {
@@ -2929,8 +2943,8 @@ function dashPipelineData(id) {
   var totalStages = stages.length;
   var doneStages = 0;
   for (var j = 0; j < stages.length; j++) { if (stages[j].status === 'completed') doneStages++; }
-  var pct = totalStages > 0 ? Math.min(100, Math.round(doneStages / totalStages * 100))
-          : (status === 'completed' ? 100 : 0);
+  var pct = status === 'completed' ? 100
+          : (totalStages > 0 ? Math.min(100, Math.round(doneStages / totalStages * 100)) : 0);
   // Stage label
   var stageLabel = '';
   if (status === 'running') {
@@ -2953,7 +2967,9 @@ function dashPipelineData(id) {
       ? d.toLocaleDateString([], {month:'short', day:'numeric'}) + ' ' + d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})
       : d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
   }
-  var stageCountStr = totalStages > 0 ? doneStages + '\u2009/\u2009' + totalStages + ' stages' : '';
+  var effectiveDone = (status === 'completed') ? totalStages : doneStages;
+  var completedPrefix = (status === 'completed' && totalStages > 0) ? '\u2713\u2002' : '';
+  var stageCountStr = totalStages > 0 ? completedPrefix + effectiveDone + '\u2009/\u2009' + totalStages + ' stages' : '';
   var simBadge = p.simulate ? '<span class="dash-sim-badge">SIM</span>' : '';
   var isTerminal = (status === 'completed' || status === 'failed' || status === 'cancelled');
   var cardActions = isTerminal
@@ -2972,7 +2988,7 @@ function buildDashCards(visibleIds) {
   for (var i = 0; i < visibleIds.length; i++) {
     var id = visibleIds[i];
     var d = dashPipelineData(id);
-    cards += '<div class="dash-card" onclick="selectTab(\'' + id + '\')">'
+    cards += '<div class="dash-card" id="dash-card-' + id + '" onclick="selectTab(\'' + id + '\')">'
       + '<div class="dash-card-top ' + d.sc + '"></div>'
       + '<div class="dash-card-body">'
       +   '<div class="dash-card-title-row"><span class="dash-card-name">' + d.name + '</span>' + d.simBadge + d.cardActions + '</div>'
@@ -3000,14 +3016,13 @@ function buildDashList(visibleIds) {
     var metaStr = d.stageCountStr + (d.stageCountStr && d.startedStr ? ' \u00b7 ' : '') + d.startedStr;
     html += '<div class="dash-list-row" onclick="selectTab(' + JSON.stringify(id) + ')">'
       + '<div class="dash-lr-status-bar ' + d.sc + '"></div>'
-      + '<span class="badge badge-' + esc(d.status) + '" style="flex-shrink:0;">' + esc(d.status) + '</span>'
-      + d.simBadge
-      + '<span class="dash-lr-name">' + d.name + '</span>'
+      + '<span class="badge badge-' + esc(d.status) + '">' + esc(d.status) + '</span>'
+      + '<div class="dash-lr-name"><span class="dash-lr-name-text">' + d.name + '</span>' + d.simBadge + '</div>'
       + '<div class="dash-lr-progress"><div class="dash-progress-fill ' + d.sc + '" style="width:' + d.pct + '%"></div></div>'
       + '<span class="dash-lr-stage-label">' + d.stageLabel + '</span>'
       + '<span class="dash-elapsed ' + d.sc + '" id="dash-elapsed-' + id + '" data-pipeline-id="' + id + '">' + d.elapsedStr + '</span>'
       + '<span class="dash-lr-meta">' + metaStr + '</span>'
-      + d.cardActions
+      + '<div class="dash-lr-actions">' + d.cardActions + '</div>'
       + '</div>';
   }
   return html;
@@ -3749,17 +3764,24 @@ function applyUpdate(data) {
     var prevStatus = pipelines[key] && pipelines[key].state && pipelines[key].state.status;
     pipelines[key] = p;
     incoming[key] = true;
+    var newSt = p.state && p.state.status;
+    prevStatuses[key] = newSt;
     if (isNew && selectedId === DASHBOARD_TAB_ID && _storedTab === null && !closedTabs[key]) selectedId = key;
     // Fireworks when the viewed pipeline transitions to completed
     if (!isNew && prevStatus !== 'completed' && p.state && p.state.status === 'completed' && key === selectedId) {
       var monitorView = document.getElementById('viewMonitor');
       if (monitorView && monitorView.style.display !== 'none' && appSettings.fireworks_enabled !== false) triggerFireworks();
     }
+    // Flash dashboard card when any pipeline transitions to completed
+    if (!isNew && prevStatus !== 'completed' && newSt === 'completed') {
+      flashDashCard(key);
+    }
   }
   // Remove any local entries no longer reported by the server (e.g. deleted runs).
   for (var existingKey in pipelines) {
     if (!incoming[existingKey]) {
       delete pipelines[existingKey];
+      delete prevStatuses[existingKey];
       if (closedTabs[existingKey]) { delete closedTabs[existingKey]; saveClosedTabs(); }
       if (selectedId === existingKey) {
         selectedId = DASHBOARD_TAB_ID;

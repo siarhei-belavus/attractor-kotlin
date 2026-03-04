@@ -206,4 +206,31 @@ class WebMonitorServerBrowserApiTest : FunSpec({
         val resp = get("/")
         resp.body() shouldContain "buildDashList"
     }
+
+    // ── Sprint 018: Completion state clarity markup presence ──────────────────
+
+    test("GET / body contains effectiveDone variable (stageCountStr fix)") {
+        val resp = get("/")
+        resp.body() shouldContain "effectiveDone"
+    }
+
+    test("GET / body contains completedPrefix variable (checkmark prefix)") {
+        val resp = get("/")
+        resp.body() shouldContain "completedPrefix"
+    }
+
+    test("GET / body contains dash-card-flash CSS class (completion flash)") {
+        val resp = get("/")
+        resp.body() shouldContain "dash-card-flash"
+    }
+
+    test("GET / body contains flashDashCard JS function (completion flash)") {
+        val resp = get("/")
+        resp.body() shouldContain "flashDashCard"
+    }
+
+    test("GET / body contains prevStatuses variable (completion transition tracking)") {
+        val resp = get("/")
+        resp.body() shouldContain "prevStatuses"
+    }
 })
