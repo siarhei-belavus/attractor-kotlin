@@ -1,0 +1,16 @@
+baseURL = "https://attractor.coreydaley.dev"
+title = "Attractor Docs"
+theme = "hugo-geekdoc"
+pluralizeListTitles = false
+
+[markup.highlight]
+  style = "github-dark"
+
+[params]
+  geekdocNav = true
+  geekdocSearch = false
+  geekdocEditPath = "https://github.com/coreydaley/attractor/edit/main/docs-site/content"
+
+[minify]
+  [minify.tdewolff.json]
+    precision = 0
