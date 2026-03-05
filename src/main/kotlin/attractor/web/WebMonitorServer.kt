@@ -1170,10 +1170,15 @@ class WebMonitorServer(private val requestedPort: Int, private val registry: Pro
                 val oaiEnabled  = store.getSetting("provider_openai_enabled") ?: "false"
                 val gemEnabled  = store.getSetting("provider_gemini_enabled") ?: "false"
                 val copilotEnabled = store.getSetting("provider_copilot_enabled") ?: "false"
+                val customEnabled = store.getSetting("provider_custom_enabled") ?: "false"
                 val anthCmd    = store.getSetting("cli_anthropic_command") ?: "claude --dangerously-skip-permissions -p {prompt}"
                 val oaiCmd     = store.getSetting("cli_openai_command") ?: "codex exec --full-auto {prompt}"
                 val gemCmd     = store.getSetting("cli_gemini_command") ?: "gemini --yolo -p {prompt}"
                 val copilotCmd = store.getSetting("cli_copilot_command") ?: "copilot --allow-all-tools -p {prompt}"
+                val customHost  = store.getSetting("custom_api_host")  ?: "http://localhost"
+                val customPort  = store.getSetting("custom_api_port")  ?: "11434"
+                val customKey   = store.getSetting("custom_api_key")   ?: ""
+                val customModel = store.getSetting("custom_api_model") ?: "llama3.2"
                 val body = """{
                     "fireworks_enabled":$fireworks,
                     "execution_mode":${js(execMode)},
@@ -1181,10 +1186,15 @@ class WebMonitorServer(private val requestedPort: Int, private val registry: Pro
                     "provider_openai_enabled":$oaiEnabled,
                     "provider_gemini_enabled":$gemEnabled,
                     "provider_copilot_enabled":$copilotEnabled,
+                    "provider_custom_enabled":$customEnabled,
                     "cli_anthropic_command":${js(anthCmd)},
                     "cli_openai_command":${js(oaiCmd)},
                     "cli_gemini_command":${js(gemCmd)},
-                    "cli_copilot_command":${js(copilotCmd)}
+                    "cli_copilot_command":${js(copilotCmd)},
+                    "custom_api_host":${js(customHost)},
+                    "custom_api_port":${js(customPort)},
+                    "custom_api_key":${js(customKey)},
+                    "custom_api_model":${js(customModel)}
                 }""".trimIndent().replace("\n", "").replace("    ", "").toByteArray()
                 ex.responseHeaders.add("Content-Type", "application/json")
                 ex.responseHeaders.add("Access-Control-Allow-Origin", "*")
@@ -1234,7 +1244,18 @@ class WebMonitorServer(private val requestedPort: Int, private val registry: Pro
             val anthropic = (env["ANTHROPIC_API_KEY"] ?: "").isNotBlank()
             val openai    = (env["OPENAI_API_KEY"] ?: "").isNotBlank()
             val gemini    = (env["GEMINI_API_KEY"] ?: env["GOOGLE_API_KEY"] ?: "").isNotBlank()
-            val body = """{"anthropic":$anthropic,"openai":$openai,"gemini":$gemini}""".toByteArray()
+            val customHost  = store.getSetting("custom_api_host") ?: "http://localhost"
+            val customPort  = store.getSetting("custom_api_port") ?: "11434"
+            val customBaseUrl = if (customPort.isBlank()) customHost else "$customHost:$customPort"
+            val customReachable = try {
+                val url = java.net.URL("$customBaseUrl/v1/models")
+                val conn = url.openConnection() as java.net.HttpURLConnection
+                conn.connectTimeout = 2000; conn.readTimeout = 2000
+                val code = conn.responseCode
+                conn.disconnect()
+                code in 200..499  // treat any HTTP response (even 401/404) as reachable
+            } catch (_: Exception) { false }
+            val body = """{"anthropic":$anthropic,"openai":$openai,"gemini":$gemini,"custom":$customReachable}""".toByteArray()
             ex.responseHeaders.add("Content-Type", "application/json")
             ex.sendResponseHeaders(200, body.size.toLong())
             ex.responseBody.use { it.write(body) }
@@ -2307,6 +2328,7 @@ body { font-family: 'Figtree', 'Segoe UI', system-ui, -apple-system, sans-serif;
 button { font-variant-emoji: text; }
 
 /* Header */
+#topChrome { position: sticky; top: 0; z-index: 100; }
 header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 12px 20px; display: flex; align-items: center; gap: 12px; }
 #agentWarningBanner, #requiredToolsWarningBanner { display:flex; align-items:center; gap:10px; padding:9px 20px; background:#7c3500; color:#fde8c8; font-size:0.85rem; border-bottom:1px solid #a04800; }
 header h1 { font-size: 1.05rem; font-weight: 600; color: var(--text-strong); flex: 1; }
@@ -2706,6 +2728,7 @@ input:checked + .toggle-slider:before { transform:translateX(20px); }
 </head>
 <body>
 
+<div id="topChrome">
 <header>
   <h1><a href="#" onclick="showView('monitor');selectTab(DASHBOARD_TAB_ID);return false;" style="color:inherit;text-decoration:none;">&#9889; Attractor</a></h1>
   <nav style="display:flex;gap:3px;">
@@ -2730,6 +2753,7 @@ input:checked + .toggle-slider:before { transform:translateX(20px); }
   <span style="font-size:1.1rem; flex-shrink:0;">⚠️</span>
   <span id="requiredToolsWarningMsg"></span>
   <button onclick="showView('settings')" style="margin-left:auto; padding:3px 12px; border-radius:5px; border:1px solid currentColor; background:transparent; color:inherit; font-size:0.8rem; cursor:pointer; white-space:nowrap; opacity:0.85;">Open Settings</button>
+</div>
 </div>
 
 <div id="viewMonitor">
@@ -2946,6 +2970,51 @@ input:checked + .toggle-slider:before { transform:translateX(20px); }
         <input id="cliCmdGemini" type="text" placeholder="gemini --yolo -p {prompt}"
           style="display:none; width:100%; box-sizing:border-box; padding:6px 10px; border:1px solid var(--border); border-radius:6px; background:var(--surface-muted); color:var(--text); font-size:0.85rem; font-family:monospace;"
           onblur="saveSetting('cli_gemini_command', this.value)">
+      </div>
+
+      <!-- Custom OpenAI-compatible endpoint — API-mode only, hidden in CLI mode -->
+      <div id="customProviderRow" class="setting-row" style="flex-direction:column; align-items:flex-start; gap:6px; padding:10px 0;">
+        <div style="display:flex; align-items:center; justify-content:space-between; width:100%;">
+          <div style="display:flex; align-items:center; gap:10px;">
+            <label class="toggle-switch" style="margin:0;">
+              <input type="checkbox" id="settingCustomEnabled" onchange="saveSetting('provider_custom_enabled', this.checked); applyCustomApiFieldsVisibility()">
+              <span class="toggle-slider"></span>
+            </label>
+            <span class="setting-label">Custom (OpenAI-compatible)</span>
+          </div>
+          <span id="apiBadgeCustom" style="font-size:0.78rem; display:none;"></span>
+        </div>
+        <div id="customApiFields" style="display:none; width:100%; flex-direction:column; gap:8px; padding-top:4px;">
+          <div style="display:grid; grid-template-columns:1fr 120px; gap:8px;">
+            <div>
+              <label style="font-size:0.78rem; color:var(--text-muted); display:block; margin-bottom:3px;">Host URL</label>
+              <input id="customApiHost" type="text" placeholder="http://localhost"
+                style="width:100%; box-sizing:border-box; padding:6px 10px; border:1px solid var(--border); border-radius:6px; background:var(--surface-muted); color:var(--text); font-size:0.85rem; font-family:monospace;"
+                onblur="saveSetting('custom_api_host', this.value)">
+            </div>
+            <div>
+              <label style="font-size:0.78rem; color:var(--text-muted); display:block; margin-bottom:3px;">Port</label>
+              <input id="customApiPort" type="text" placeholder="11434"
+                style="width:100%; box-sizing:border-box; padding:6px 10px; border:1px solid var(--border); border-radius:6px; background:var(--surface-muted); color:var(--text); font-size:0.85rem; font-family:monospace;"
+                onblur="saveSetting('custom_api_port', this.value)">
+            </div>
+          </div>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+            <div>
+              <label style="font-size:0.78rem; color:var(--text-muted); display:block; margin-bottom:3px;">API Key <span style="font-weight:400;">(optional)</span></label>
+              <input id="customApiKey" type="text" placeholder="ollama"
+                style="width:100%; box-sizing:border-box; padding:6px 10px; border:1px solid var(--border); border-radius:6px; background:var(--surface-muted); color:var(--text); font-size:0.85rem; font-family:monospace;"
+                onblur="saveSetting('custom_api_key', this.value)">
+            </div>
+            <div>
+              <label style="font-size:0.78rem; color:var(--text-muted); display:block; margin-bottom:3px;">Model</label>
+              <input id="customApiModel" type="text" placeholder="llama3.2"
+                style="width:100%; box-sizing:border-box; padding:6px 10px; border:1px solid var(--border); border-radius:6px; background:var(--surface-muted); color:var(--text); font-size:0.85rem; font-family:monospace;"
+                onblur="saveSetting('custom_api_model', this.value)">
+            </div>
+          </div>
+          <div style="font-size:0.78rem; color:var(--text-muted);">Compatible with Ollama, LM Studio, vLLM, and any OpenAI <code>/v1/chat/completions</code> endpoint.</div>
+        </div>
       </div>
 
       <!-- Copilot — CLI-only provider, hidden in Direct API mode -->
@@ -3442,6 +3511,7 @@ function buildPanel(id) {
   clearInterval(stageLogTimer); stageLogTimer = null;
   stageLogNodeId = null; stageLogContent = '';
   panelBuiltFor = id;
+  graphSigFor[id] = null;   // force graph re-render after DOM rebuild
   gitPanelExpanded = false;
   window._gitData = null;
   // Reset version history state on tab switch
@@ -4272,6 +4342,16 @@ function loadSettings() {
       if (gemEl) gemEl.checked = s.provider_gemini_enabled !== false;
       var copilotEl = document.getElementById('settingCopilotEnabled');
       if (copilotEl) copilotEl.checked = s.provider_copilot_enabled === true || s.provider_copilot_enabled === 'true';
+      var customEl = document.getElementById('settingCustomEnabled');
+      if (customEl) customEl.checked = s.provider_custom_enabled === true || s.provider_custom_enabled === 'true';
+      var customHost = document.getElementById('customApiHost');
+      if (customHost) customHost.value = s.custom_api_host || 'http://localhost';
+      var customPort = document.getElementById('customApiPort');
+      if (customPort) customPort.value = s.custom_api_port || '11434';
+      var customKey = document.getElementById('customApiKey');
+      if (customKey) customKey.value = s.custom_api_key || '';
+      var customModel = document.getElementById('customApiModel');
+      if (customModel) customModel.value = s.custom_api_model || 'llama3.2';
       var anthCmd = document.getElementById('cliCmdAnthropic');
       if (anthCmd) anthCmd.value = s.cli_anthropic_command || 'claude --dangerously-skip-permissions -p {prompt}';
       var oaiCmd = document.getElementById('cliCmdOpenAI');
@@ -4303,7 +4383,7 @@ function applyExecutionModeUi(mode) {
   var cliBtn = document.getElementById('modeCliBtn');
   var cliFields = ['cliCmdAnthropic', 'cliCmdOpenAI', 'cliCmdGemini', 'cliCmdCopilot'];
   var cliBadges = ['cliBadgeAnthropic', 'cliBadgeOpenAI', 'cliBadgeGemini', 'cliBadgeCopilot'];
-  var apiBadges = ['apiBadgeAnthropic', 'apiBadgeOpenAI', 'apiBadgeGemini'];
+  var apiBadges = ['apiBadgeAnthropic', 'apiBadgeOpenAI', 'apiBadgeGemini', 'apiBadgeCustom'];
   if (apiBtn) {
     apiBtn.style.background = mode === 'api' ? 'var(--accent, #4f8ef7)' : 'var(--surface-muted)';
     apiBtn.style.color = mode === 'api' ? '#fff' : 'var(--text)';
@@ -4341,10 +4421,23 @@ function applyExecutionModeUi(mode) {
   // Copilot is CLI-only — hide the entire row in Direct API mode
   var copilotRow = document.getElementById('copilotProviderRow');
   if (copilotRow) copilotRow.style.display = mode === 'cli' ? '' : 'none';
+  // Custom is API-only — hide the entire row in CLI mode
+  var customRow = document.getElementById('customProviderRow');
+  if (customRow) customRow.style.display = mode === 'api' ? '' : 'none';
+  // Show/hide custom fields based on toggle state
+  applyCustomApiFieldsVisibility();
   var apiKeyNote = document.getElementById('apiKeyRestartNote');
   if (apiKeyNote) apiKeyNote.style.display = mode === 'api' ? 'block' : 'none';
   var cliPromptHint = document.getElementById('cliPromptHint');
   if (cliPromptHint) cliPromptHint.style.display = mode === 'cli' ? 'inline' : 'none';
+}
+
+function applyCustomApiFieldsVisibility() {
+  var toggle = document.getElementById('settingCustomEnabled');
+  var fields = document.getElementById('customApiFields');
+  if (!fields) return;
+  var show = toggle && toggle.checked;
+  fields.style.display = show ? 'flex' : 'none';
 }
 
 function loadCliStatus() {
@@ -4419,6 +4512,12 @@ function loadApiKeyStatus() {
       apiBadge('apiBadgeAnthropic', 'settingAnthropicEnabled', s.anthropic, 'ANTHROPIC_API_KEY');
       apiBadge('apiBadgeOpenAI',    'settingOpenAIEnabled',    s.openai,    'OPENAI_API_KEY');
       apiBadge('apiBadgeGemini',    'settingGeminiEnabled',    s.gemini,    'GEMINI_API_KEY or GOOGLE_API_KEY');
+      // Custom: badge shows reachability, not a key requirement
+      var customBadge = document.getElementById('apiBadgeCustom');
+      if (customBadge) {
+        customBadge.style.color = s.custom ? '#3c9e5f' : '#c0392b';
+        customBadge.innerHTML = s.custom ? '\u25cf reachable' : '\u2717 unreachable';
+      }
       agentApiKeyStatus = { anthropic: !!s.anthropic, openai: !!s.openai, gemini: !!s.gemini };
       updateAgentWarning();
     })
