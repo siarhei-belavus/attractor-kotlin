@@ -82,7 +82,7 @@ Attractor is a **Kotlin/JVM pipeline runner** for DOT-graph-defined AI workflows
 
 ### Key conventions
 
-- The `build.gradle.kts` compiles to JVM target 21 (Kotlin 1.9.x max); Java 22 is required to run (Gradle 8.7 is incompatible with Java 25+).
+- The `build.gradle.kts` compiles to JVM target 22; Java 22 is required to run (Gradle 8.7 is incompatible with Java 25+).
 - Tests use JUnit 5 + Kotest assertions + H2 in-memory database for DB tests.
 - The `ATTRACTOR_DEBUG` env var enables debug logging and stack traces.
 - `bin/attractor` is a shell wrapper that auto-locates the latest CLI JAR.

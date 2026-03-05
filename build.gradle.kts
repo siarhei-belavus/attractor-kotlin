@@ -1,6 +1,6 @@
 plugins {
-    kotlin("jvm") version "1.9.22"
-    kotlin("plugin.serialization") version "1.9.22"
+    kotlin("jvm") version "2.3.10"
+    kotlin("plugin.serialization") version "2.3.10"
     application
 }
 
@@ -34,8 +34,8 @@ repositories {
 }
 
 dependencies {
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.9.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.10.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2")
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
     implementation("org.xerial:sqlite-jdbc:3.45.3.0")
     runtimeOnly("com.mysql:mysql-connector-j:8.3.0")
@@ -54,13 +54,13 @@ application {
 
 tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
     kotlinOptions {
-        jvmTarget = "21"
+        jvmTarget = "22"
     }
 }
 
 tasks.withType<JavaCompile> {
-    sourceCompatibility = "21"
-    targetCompatibility = "21"
+    sourceCompatibility = "22"
+    targetCompatibility = "22"
 }
 
 tasks.test {
