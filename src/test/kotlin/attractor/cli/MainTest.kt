@@ -52,6 +52,33 @@ class MainTest : FunSpec({
         ex.message!! shouldContain "notaresource"
     }
 
+    test("ATTRACTOR_HOST env var sets base URL") {
+        val (srv, port) = startFakeServer { ex ->
+            val body = "[]".toByteArray()
+            ex.sendResponseHeaders(200, body.size.toLong())
+            ex.responseBody.write(body)
+        }
+        try {
+            captureStdout { run(listOf("project", "list"), mapOf("ATTRACTOR_HOST" to "http://localhost:$port")) }
+        } finally { srv.stop(0) }
+    }
+
+    test("--host flag takes precedence over ATTRACTOR_HOST env var") {
+        val (srv, port) = startFakeServer { ex ->
+            val body = "[]".toByteArray()
+            ex.sendResponseHeaders(200, body.size.toLong())
+            ex.responseBody.write(body)
+        }
+        try {
+            captureStdout {
+                run(
+                    listOf("--host", "http://localhost:$port", "project", "list"),
+                    mapOf("ATTRACTOR_HOST" to "http://localhost:9")
+                )
+            }
+        } finally { srv.stop(0) }
+    }
+
     test("--host overrides base URL") {
         val (srv, port) = startFakeServer { ex ->
             val body = "[]".toByteArray()
