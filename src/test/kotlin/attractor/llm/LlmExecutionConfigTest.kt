@@ -90,6 +90,34 @@ class LlmExecutionConfigTest : FunSpec({
         cfg.cliCommands.gemini shouldBe "gemini --text {prompt}"
     }
 
+    test("custom api config read from env vars when no db settings") {
+        val env = mapOf(
+            "ATTRACTOR_CUSTOM_API_ENABLED" to "true",
+            "ATTRACTOR_CUSTOM_API_HOST"    to "http://ollama.internal",
+            "ATTRACTOR_CUSTOM_API_PORT"    to "8080",
+            "ATTRACTOR_CUSTOM_API_KEY"     to "secret",
+            "ATTRACTOR_CUSTOM_API_MODEL"   to "mistral"
+        )
+        val cfg = LlmExecutionConfig.from(store, env)
+        cfg.providerToggles.custom shouldBe true
+        cfg.customApiConfig.host   shouldBe "http://ollama.internal"
+        cfg.customApiConfig.port   shouldBe "8080"
+        cfg.customApiConfig.apiKey shouldBe "secret"
+        cfg.customApiConfig.model  shouldBe "mistral"
+    }
+
+    test("db setting takes precedence over env var for custom api config") {
+        store.setSetting("custom_api_host", "http://from-db")
+        store.setSetting("custom_api_model", "llama3.2")
+        val env = mapOf(
+            "ATTRACTOR_CUSTOM_API_HOST"  to "http://from-env",
+            "ATTRACTOR_CUSTOM_API_MODEL" to "from-env-model"
+        )
+        val cfg = LlmExecutionConfig.from(store, env)
+        cfg.customApiConfig.host  shouldBe "http://from-db"
+        cfg.customApiConfig.model shouldBe "llama3.2"
+    }
+
     test("all settings combined roundtrip") {
         store.setSetting("execution_mode", "cli")
         store.setSetting("provider_anthropic_enabled", "true")

@@ -37,6 +37,14 @@ ENV OPENAI_API_KEY=""
 ENV GEMINI_API_KEY=""
 ENV GOOGLE_API_KEY=""
 
+# Custom OpenAI-compatible API (Ollama, LM Studio, vLLM, etc.)
+# These bootstrap the settings on first start; values saved via the UI take precedence.
+ENV ATTRACTOR_CUSTOM_API_ENABLED=""
+ENV ATTRACTOR_CUSTOM_API_HOST=""
+ENV ATTRACTOR_CUSTOM_API_PORT=""
+ENV ATTRACTOR_CUSTOM_API_KEY=""
+ENV ATTRACTOR_CUSTOM_API_MODEL=""
+
 EXPOSE 7070
 
 ENTRYPOINT ["java", "-jar", "/app/attractor-server.jar"]
