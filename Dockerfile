@@ -7,12 +7,12 @@ COPY gradlew settings.gradle.kts build.gradle.kts ./
 COPY gradle/ gradle/
 
 # Download dependencies in a separate layer for better caching
-RUN --mount=type=cache,target=/root/.gradle \
+RUN --mount=type=cache,target=/root/.gradle,id=gradle-$TARGETARCH \
     chmod +x gradlew && ./gradlew dependencies --no-daemon -q
 
 COPY src/ src/
 
-RUN --mount=type=cache,target=/root/.gradle \
+RUN --mount=type=cache,target=/root/.gradle,id=gradle-$TARGETARCH \
     ./gradlew releaseJar --no-daemon -q
 
 # ── Runtime stage ─────────────────────────────────────────────────────────────
