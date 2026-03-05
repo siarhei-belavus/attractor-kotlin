@@ -19,8 +19,24 @@ RUN --mount=type=cache,target=/root/.gradle,id=gradle-$TARGETARCH \
 FROM eclipse-temurin:21-jre
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
+        # required tools
         graphviz \
         git \
+        # optional tools
+        python3 \
+        ruby \
+        nodejs \
+        npm \
+        golang-go \
+        rustc \
+        cargo \
+        gcc \
+        g++ \
+        clang \
+        make \
+        gradle \
+        maven \
+        curl \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
