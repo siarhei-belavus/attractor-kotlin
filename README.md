@@ -1,6 +1,6 @@
 # Attractor
 
-[![CI](https://github.com/coreydaley/attractor/actions/workflows/ci.yml/badge.svg)](https://github.com/coreydaley/attractor/actions/workflows/ci.yml) [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
+[![CI](https://github.com/coreydaley/attractor/actions/workflows/ci.yml/badge.svg)](https://github.com/coreydaley/attractor/actions/workflows/ci.yml) [![Docs](https://github.com/coreydaley/attractor/actions/workflows/docs.yml/badge.svg)](https://coreydaley.github.io/attractor/) [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 
 > **Based on the fantastic work from [StrongDM's Software Factory](https://factory.strongdm.ai/) and the [Attractor project](https://github.com/strongdm/attractor).**
 >
@@ -22,7 +22,7 @@ A DOT-based pipeline runner that orchestrates multi-stage AI workflows. You defi
 - **Retry & back-off** — configurable per-node retry policy with exponential back-off
 - **Persist & resume** — run state is stored in SQLite (default), MySQL, or PostgreSQL; configured via `ATTRACTOR_DB_*` environment variables; crashed runs can be resumed from checkpoints
 - **Web dashboard** — real-time SSE-powered UI at `http://localhost:7070`; supports multiple concurrent pipelines; upload `.dot` files via the browser
-- **In-app documentation** — built-in `/docs` page with four tabs (Web App, REST API, CLI, DOT Format); accessible from the Docs button in the nav bar; no external dependencies, works offline
+- **Documentation** — full docs published at [coreydaley.github.io/attractor](https://coreydaley.github.io/attractor/); the Docs button in the nav bar opens the site in a new tab
 - **REST API v1** — 35-endpoint versioned REST API at `/api/v1/`; see [`docs/api/rest-v1.md`](docs/api/rest-v1.md) for the full reference
 
 ## Requirements
@@ -118,6 +118,7 @@ java -jar build/libs/attractor-server-1.0.0.jar [options]
 | `OPENAI_API_KEY` | API key for OpenAI GPT (Direct API mode) |
 | `GEMINI_API_KEY` or `GOOGLE_API_KEY` | API key for Google Gemini (Direct API mode) |
 | `ATTRACTOR_DEBUG` | Set to any value to enable debug output and stack traces |
+| `ATTRACTOR_HOST` | Default server URL for the CLI (overridden by `--host`; e.g. `http://attractor.example.com:7070`) |
 
 ## LLM Providers
 
@@ -362,10 +363,16 @@ Add `bin/` to your `$PATH` to use `attractor` as a bare command anywhere.
 
 | Flag | Description |
 |------|-------------|
-| `--host <url>` | Server base URL (default: `http://localhost:7070`) |
+| `--host <url>` | Server base URL. Overrides `ATTRACTOR_HOST`; defaults to `http://localhost:8080` |
 | `--output json` | Output raw JSON instead of formatted tables |
 | `--help`, `-h` | Show usage information |
 | `--version` | Print version and exit |
+
+Set `ATTRACTOR_HOST` in your shell profile to avoid passing `--host` on every invocation:
+
+```bash
+export ATTRACTOR_HOST=http://attractor.example.com:7070
+```
 
 ### Commands
 
