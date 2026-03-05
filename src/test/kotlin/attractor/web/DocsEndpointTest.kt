@@ -61,6 +61,6 @@ class DocsEndpointTest : FunSpec({
     }
 
     test("GET / root page Docs nav button opens external docs site") {
-        get("/").body() shouldContain "coreydaley.github.io/attractor"
+        get("/").body() shouldContain "attractor.coreydaley.dev"
     }
 })

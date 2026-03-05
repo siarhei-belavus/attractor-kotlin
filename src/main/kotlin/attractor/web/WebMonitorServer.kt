@@ -1246,7 +1246,7 @@ class WebMonitorServer(private val requestedPort: Int, private val registry: Pro
             val customPort  = store.getSetting("custom_api_port") ?: "11434"
             val customBaseUrl = if (customPort.isBlank()) customHost else "$customHost:$customPort"
             val customReachable = try {
-                val url = java.net.URL("$customBaseUrl/v1/models")
+                val url = java.net.URI("$customBaseUrl/v1/models").toURL()
                 val conn = url.openConnection() as java.net.HttpURLConnection
                 conn.connectTimeout = 2000; conn.readTimeout = 2000
                 val code = conn.responseCode
@@ -1931,7 +1931,7 @@ input:checked + .toggle-slider:before { transform:translateX(20px); }
     <button class="nav-btn" onclick="openImportModal()">&#128229; Import</button>
     <button class="nav-btn" id="navArchived" onclick="showView('archived')">&#128193; Archived</button>
     <button class="nav-btn" id="navSettings" onclick="showView('settings')">&#9881;&#65039; Settings</button>
-    <button class="nav-btn" onclick="window.open('https://coreydaley.github.io/attractor/','_blank')">&#128218; Docs</button>
+    <a class="nav-btn" href="https://attractor.coreydaley.dev" target="_blank" rel="noopener noreferrer" style="text-decoration:none;">&#128218; Docs</a>
   </nav>
   <div class="conn-indicator">
     <span id="connDot" class="conn-dot offline" title="Offline"></span>
