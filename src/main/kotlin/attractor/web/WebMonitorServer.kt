@@ -1393,11 +1393,13 @@ class WebMonitorServer(private val requestedPort: Int, private val registry: Pro
           <button class="doc-tab" id="tab-restapi" onclick="showTab('restapi')">REST API</button>
           <button class="doc-tab" id="tab-cli" onclick="showTab('cli')">CLI</button>
           <button class="doc-tab" id="tab-dotformat" onclick="showTab('dotformat')">DOT Format</button>
+          <button class="doc-tab" id="tab-docker" onclick="showTab('docker')">Docker</button>
         </div>
         <div id="panel-webapp" class="doc-panel">${webAppTabContent()}</div>
         <div id="panel-restapi" class="doc-panel">${restApiTabContent()}</div>
         <div id="panel-cli" class="doc-panel">${cliTabContent()}</div>
         <div id="panel-dotformat" class="doc-panel">${dotFormatTabContent()}</div>
+        <div id="panel-docker" class="doc-panel">${dockerTabContent()}</div>
     """)
 
     private fun docsPageShell(body: String): String = """<!DOCTYPE html>
@@ -2192,6 +2194,138 @@ attractor artifact stage-log &lt;id&gt; &lt;nodeId&gt;</code></pre>
 <li>Stage <code>prompt</code> text can reference previous stage context — the runtime maintains a conversation history</li>
 <li>The <code>simulate=true</code> option runs the project without real LLM calls (useful for graph testing)</li>
 </ul>
+"""
+
+    private fun dockerTabContent(): String = """
+<h2>Overview</h2>
+<p>Attractor ships as a multi-stage Docker image published to the GitHub Container Registry on every versioned release. The image bundles a Java 21 JRE, <code>graphviz</code>, and <code>git</code> — everything needed to run the server. SQLite data is stored in a mounted volume so it persists across container restarts.</p>
+
+<h2>Quick Start</h2>
+<pre><code># Pull the latest release
+docker pull ghcr.io/coreydaley/attractor:latest
+
+# Run with a local data volume (SQLite persisted to ./data/attractor.db)
+docker run --rm -p 7070:7070 -v "${'$'}(pwd)/data:/app/data" ghcr.io/coreydaley/attractor:latest</code></pre>
+<p>Open <a href="http://localhost:7070" target="_blank">http://localhost:7070</a> once the container is running.</p>
+
+<h2>Image Tags</h2>
+<p>Each release publishes three tags:</p>
+<table>
+<tr><th>Tag</th><th>Example</th><th>Notes</th></tr>
+<tr><td><code>&lt;major&gt;.&lt;minor&gt;.&lt;patch&gt;</code></td><td><code>1.2.3</code></td><td>Exact release — recommended for production</td></tr>
+<tr><td><code>&lt;major&gt;.&lt;minor&gt;</code></td><td><code>1.2</code></td><td>Latest patch in this minor series</td></tr>
+<tr><td><code>&lt;major&gt;</code></td><td><code>1</code></td><td>Latest release in this major series</td></tr>
+</table>
+
+<h2>Building Locally</h2>
+<pre><code>make docker-build     # builds attractor:local
+make docker-run       # runs attractor:local, auto-loads .env if present</code></pre>
+<p>Or directly with Docker:</p>
+<pre><code>docker build -t attractor:local .
+docker run --rm -p 7070:7070 -v "${'$'}(pwd)/data:/app/data" attractor:local</code></pre>
+
+<h2>Passing API Keys</h2>
+<p>LLM provider API keys are passed as environment variables at run time — they are never baked into the image.</p>
+<h3>Using a .env file (recommended)</h3>
+<pre><code>cp .env.example .env
+# edit .env and fill in your keys
+make docker-run       # automatically passes --env-file .env when .env exists</code></pre>
+<p>Or with Docker directly:</p>
+<pre><code>docker run --rm -p 7070:7070 \
+  -v "${'$'}(pwd)/data:/app/data" \
+  --env-file .env \
+  ghcr.io/coreydaley/attractor:latest</code></pre>
+<h3>Inline -e flags</h3>
+<pre><code>docker run --rm -p 7070:7070 \
+  -v "${'$'}(pwd)/data:/app/data" \
+  -e ANTHROPIC_API_KEY=sk-ant-... \
+  ghcr.io/coreydaley/attractor:latest</code></pre>
+
+<h2>Environment Variables</h2>
+<h3>LLM Provider API Keys</h3>
+<table>
+<tr><th>Variable</th><th>Description</th></tr>
+<tr><td><code>ANTHROPIC_API_KEY</code></td><td>API key for Anthropic Claude (Direct API mode)</td></tr>
+<tr><td><code>OPENAI_API_KEY</code></td><td>API key for OpenAI GPT (Direct API mode)</td></tr>
+<tr><td><code>GEMINI_API_KEY</code></td><td>API key for Google Gemini (Direct API mode)</td></tr>
+<tr><td><code>GOOGLE_API_KEY</code></td><td>Alternative to <code>GEMINI_API_KEY</code></td></tr>
+</table>
+
+<h3>Custom OpenAI-Compatible API</h3>
+<p>These env vars bootstrap the custom provider settings on first start. Values saved through the Settings UI take precedence on subsequent starts.</p>
+<table>
+<tr><th>Variable</th><th>Default</th><th>Description</th></tr>
+<tr><td><code>ATTRACTOR_CUSTOM_API_ENABLED</code></td><td><code>false</code></td><td>Set to <code>true</code> to enable the custom provider</td></tr>
+<tr><td><code>ATTRACTOR_CUSTOM_API_HOST</code></td><td><code>http://localhost</code></td><td>Base URL of the OpenAI-compatible endpoint</td></tr>
+<tr><td><code>ATTRACTOR_CUSTOM_API_PORT</code></td><td><code>11434</code></td><td>Port number (leave blank to omit from URL)</td></tr>
+<tr><td><code>ATTRACTOR_CUSTOM_API_KEY</code></td><td>—</td><td>API key (optional — Ollama does not require one)</td></tr>
+<tr><td><code>ATTRACTOR_CUSTOM_API_MODEL</code></td><td><code>llama3.2</code></td><td>Model name to use for requests</td></tr>
+</table>
+<div class="tip-box">&#128161; <strong>Ollama tip:</strong> If running Ollama as a separate container on the same Docker network, set <code>ATTRACTOR_CUSTOM_API_HOST</code> to the Ollama service name (e.g. <code>http://ollama</code>) rather than <code>localhost</code>.</div>
+
+<h3>Database</h3>
+<p>By default the container uses SQLite at <code>/app/data/attractor.db</code> (set via <code>ATTRACTOR_DB_NAME</code>). To use MySQL or PostgreSQL instead, set the following variables:</p>
+<table>
+<tr><th>Variable</th><th>Default</th><th>Description</th></tr>
+<tr><td><code>ATTRACTOR_DB_TYPE</code></td><td><code>sqlite</code></td><td><code>sqlite</code>, <code>mysql</code>, or <code>postgresql</code></td></tr>
+<tr><td><code>ATTRACTOR_DB_HOST</code></td><td><code>localhost</code></td><td>Database server hostname</td></tr>
+<tr><td><code>ATTRACTOR_DB_PORT</code></td><td>—</td><td>Database port (defaults by type)</td></tr>
+<tr><td><code>ATTRACTOR_DB_NAME</code></td><td><code>attractor</code></td><td>Database name (or SQLite file path)</td></tr>
+<tr><td><code>ATTRACTOR_DB_USER</code></td><td>—</td><td>Database username</td></tr>
+<tr><td><code>ATTRACTOR_DB_PASSWORD</code></td><td>—</td><td>Database password</td></tr>
+<tr><td><code>ATTRACTOR_DB_URL</code></td><td>—</td><td>Full JDBC URL — overrides all individual <code>ATTRACTOR_DB_*</code> vars</td></tr>
+</table>
+
+<h2>Volumes</h2>
+<table>
+<tr><th>Path</th><th>Description</th></tr>
+<tr><td><code>/app/data</code></td><td>SQLite database and any other persistent data. Mount this to preserve state across restarts.</td></tr>
+</table>
+
+<h2>Ports</h2>
+<table>
+<tr><th>Port</th><th>Description</th></tr>
+<tr><td><code>7070</code></td><td>Web UI and REST API. Map with <code>-p &lt;host-port&gt;:7070</code>.</td></tr>
+</table>
+
+<h2>Docker Compose Example</h2>
+<pre><code>services:
+  attractor:
+    image: ghcr.io/coreydaley/attractor:latest
+    ports:
+      - "7070:7070"
+    volumes:
+      - attractor-data:/app/data
+    environment:
+      ANTHROPIC_API_KEY: ${'$'}{ANTHROPIC_API_KEY}
+      OPENAI_API_KEY: ${'$'}{OPENAI_API_KEY}
+
+volumes:
+  attractor-data:</code></pre>
+<p>With Ollama on the same network:</p>
+<pre><code>services:
+  attractor:
+    image: ghcr.io/coreydaley/attractor:latest
+    ports:
+      - "7070:7070"
+    volumes:
+      - attractor-data:/app/data
+    environment:
+      ATTRACTOR_CUSTOM_API_ENABLED: "true"
+      ATTRACTOR_CUSTOM_API_HOST: "http://ollama"
+      ATTRACTOR_CUSTOM_API_PORT: "11434"
+      ATTRACTOR_CUSTOM_API_MODEL: "llama3.2"
+    depends_on:
+      - ollama
+
+  ollama:
+    image: ollama/ollama:latest
+    volumes:
+      - ollama-data:/root/.ollama
+
+volumes:
+  attractor-data:
+  ollama-data:</code></pre>
 """
 
     fun start() {
