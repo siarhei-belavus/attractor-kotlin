@@ -2306,7 +2306,7 @@ button { font-variant-emoji: text; }
 
 /* Header */
 header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 12px 20px; display: flex; align-items: center; gap: 12px; }
-#agentWarningBanner { display:flex; align-items:center; gap:10px; padding:9px 20px; background:#7c3500; color:#fde8c8; font-size:0.85rem; border-bottom:1px solid #a04800; }
+#agentWarningBanner, #requiredToolsWarningBanner { display:flex; align-items:center; gap:10px; padding:9px 20px; background:#7c3500; color:#fde8c8; font-size:0.85rem; border-bottom:1px solid #a04800; }
 header h1 { font-size: 1.05rem; font-weight: 600; color: var(--text-strong); flex: 1; }
 .conn-indicator { display: flex; align-items: center; gap: 5px; font-size: 0.72rem; color: var(--text-faint); }
 .conn-dot { width: 10px; height: 10px; border-radius: 50%; background: radial-gradient(circle at 35% 32%, #b0b8c4, #6e7681 55%, #3a3f47); box-shadow: 0 1px 3px rgba(0,0,0,0.5), inset 0 -1px 2px rgba(0,0,0,0.3); }
@@ -2722,6 +2722,11 @@ input:checked + .toggle-slider:before { transform:translateX(20px); }
 <div id="agentWarningBanner" style="display:none;">
   <span id="agentWarningIcon" style="font-size:1.1rem; flex-shrink:0;">⚠️</span>
   <span id="agentWarningMsg"></span>
+  <button onclick="showView('settings')" style="margin-left:auto; padding:3px 12px; border-radius:5px; border:1px solid currentColor; background:transparent; color:inherit; font-size:0.8rem; cursor:pointer; white-space:nowrap; opacity:0.85;">Open Settings</button>
+</div>
+<div id="requiredToolsWarningBanner" style="display:none;">
+  <span style="font-size:1.1rem; flex-shrink:0;">⚠️</span>
+  <span id="requiredToolsWarningMsg"></span>
   <button onclick="showView('settings')" style="margin-left:auto; padding:3px 12px; border-radius:5px; border:1px solid currentColor; background:transparent; color:inherit; font-size:0.8rem; cursor:pointer; white-space:nowrap; opacity:0.85;">Open Settings</button>
 </div>
 
@@ -4447,6 +4452,7 @@ function showToast(message, type) {
 }
 
 var systemToolsRequired = { git:'git', java:'java' };
+var requiredToolsStatus = {};
 var systemToolsOptional = {
   python3:'python3', ruby:'ruby', node:'node', go:'go', rustc:'rustc',
   gcc:'gcc', gxx:'g++', clang:'clang', clangxx:'clang++',
@@ -4465,6 +4471,22 @@ function renderToolBadges(gridId, toolMap) {
   }).join('');
 }
 
+function updateRequiredToolsWarning() {
+  var banner = document.getElementById('requiredToolsWarningBanner');
+  var msg    = document.getElementById('requiredToolsWarningMsg');
+  if (!banner || !msg) return;
+  var missing = Object.keys(systemToolsRequired).filter(function(id) {
+    return !requiredToolsStatus[id];
+  }).map(function(id) { return systemToolsRequired[id]; });
+  if (missing.length > 0) {
+    msg.textContent = 'Required system tool' + (missing.length > 1 ? 's' : '') +
+      ' not found: ' + missing.join(', ') + '. Core functionality may not work correctly.';
+    banner.style.display = 'flex';
+  } else {
+    banner.style.display = 'none';
+  }
+}
+
 function loadSystemToolsStatus() {
   renderToolBadges('systemToolsRequired', systemToolsRequired);
   renderToolBadges('systemToolsOptional', systemToolsOptional);
@@ -4479,6 +4501,8 @@ function loadSystemToolsStatus() {
         st.className = 'tool-badge-status ' + (found ? 'found' : 'missing');
         st.textContent = found ? 'detected' : 'not found';
       });
+      Object.keys(systemToolsRequired).forEach(function(id) { requiredToolsStatus[id] = !!s[id]; });
+      updateRequiredToolsWarning();
     })
     .catch(function() {
       Object.keys(allSystemTools).forEach(function(id) {
@@ -4488,6 +4512,8 @@ function loadSystemToolsStatus() {
         st.className = 'tool-badge-status missing';
         st.textContent = 'not found';
       });
+      Object.keys(systemToolsRequired).forEach(function(id) { requiredToolsStatus[id] = false; });
+      updateRequiredToolsWarning();
     });
 }
 
