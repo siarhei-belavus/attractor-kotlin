@@ -308,25 +308,24 @@ class RestApiRouterTest : FunSpec({
 
     // ── Settings ──────────────────────────────────────────────────────────────
 
-    test("GET /api/v1/settings returns 200 with fireworks_enabled key") {
+    test("GET /api/v1/settings returns 200 with execution_mode key") {
         val resp = get("/settings")
         resp.statusCode() shouldBe 200
-        resp.body() shouldContain "fireworks_enabled"
+        resp.body() shouldContain "execution_mode"
     }
 
-    test("PUT /api/v1/settings/fireworks_enabled updates setting and returns 200") {
-        val resp = put("/settings/fireworks_enabled", """{"value":"false"}""")
+    test("PUT /api/v1/settings/execution_mode updates setting and returns 200") {
+        val resp = put("/settings/execution_mode", """{"value":"cli"}""")
         resp.statusCode() shouldBe 200
-        resp.body() shouldContain "\"key\":\"fireworks_enabled\""
-        resp.body() shouldContain "\"value\":\"false\""
+        resp.body() shouldContain "\"key\":\"execution_mode\""
+        resp.body() shouldContain "\"value\":\"cli\""
     }
 
-    test("GET /api/v1/settings/fireworks_enabled after PUT returns 200") {
-        // Ensure the setting exists first
-        put("/settings/fireworks_enabled", """{"value":"true"}""")
-        val resp = get("/settings/fireworks_enabled")
+    test("GET /api/v1/settings/execution_mode after PUT returns 200") {
+        put("/settings/execution_mode", """{"value":"api"}""")
+        val resp = get("/settings/execution_mode")
         resp.statusCode() shouldBe 200
-        resp.body() shouldContain "\"key\":\"fireworks_enabled\""
+        resp.body() shouldContain "\"key\":\"execution_mode\""
     }
 
     test("GET /api/v1/settings/unknown_key returns 404") {

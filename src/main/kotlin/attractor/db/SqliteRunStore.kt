@@ -100,7 +100,7 @@ class SqliteRunStore(dbPath: String) : RunStore {
             """.trimIndent())
         }
         conn.createStatement().use { stmt ->
-            stmt.execute("INSERT OR IGNORE INTO settings (key, value) VALUES ('fireworks_enabled', 'true')")
+            stmt.execute("INSERT OR IGNORE INTO settings (key, value) VALUES ('execution_mode', 'api')")
         }
     }
 

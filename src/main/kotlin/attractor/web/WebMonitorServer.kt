@@ -1164,7 +1164,6 @@ class WebMonitorServer(private val requestedPort: Int, private val registry: Pro
         // ── Get settings ─────────────────────────────────────────────────────
         httpServer.createContext("/api/settings") { ex ->
             if (ex.requestMethod == "GET") {
-                val fireworks  = store.getSetting("fireworks_enabled") ?: "true"
                 val execMode   = store.getSetting("execution_mode") ?: "api"
                 val anthEnabled = store.getSetting("provider_anthropic_enabled") ?: "false"
                 val oaiEnabled  = store.getSetting("provider_openai_enabled") ?: "false"
@@ -1180,7 +1179,6 @@ class WebMonitorServer(private val requestedPort: Int, private val registry: Pro
                 val customKey   = store.getSetting("custom_api_key")   ?: ""
                 val customModel = store.getSetting("custom_api_model") ?: "llama3.2"
                 val body = """{
-                    "fireworks_enabled":$fireworks,
                     "execution_mode":${js(execMode)},
                     "provider_anthropic_enabled":$anthEnabled,
                     "provider_openai_enabled":$oaiEnabled,
@@ -1630,13 +1628,28 @@ export ATTRACTOR_DB_URL="mysql://app:secret@localhost:3306/attractor"</code></pr
 <p>Attractor creates the database schema automatically on first start. A misconfigured <code>ATTRACTOR_DB_TYPE</code> causes a clear startup error and clean exit.</p>
 
 <h2>Settings</h2>
+<h3>Execution Mode</h3>
+<p><strong>Direct API</strong> (default) — Attractor makes HTTP calls directly to provider REST APIs. Requires the corresponding API key environment variable to be set before startup.</p>
+<p><strong>CLI subprocess</strong> — Attractor shells out to installed CLI tools. No environment-variable API keys are needed; authentication is handled by the tool itself.</p>
+
+<h3>Providers</h3>
 <table>
-<tr><th>Setting</th><th>Description</th></tr>
-<tr><td>Execution Mode</td><td><strong>API</strong> (default) — HTTP REST calls to LLM providers; <strong>CLI</strong> — invoke <code>claude</code>, <code>codex</code>, or <code>gemini</code> CLI binaries</td></tr>
-<tr><td>Provider toggles</td><td>Enable or disable Anthropic, OpenAI, and Gemini independently</td></tr>
-<tr><td>CLI command templates</td><td>Customize the CLI invocation command per provider (shown in CLI mode)</td></tr>
-<tr><td>Fireworks</td><td>Toggle celebratory animation when a project completes successfully</td></tr>
+<tr><th>Provider</th><th>Modes</th><th>Notes</th></tr>
+<tr><td>Anthropic (claude)</td><td>API, CLI</td><td>API: requires <code>ANTHROPIC_API_KEY</code>. CLI: requires the <code>claude</code> binary.</td></tr>
+<tr><td>OpenAI (codex)</td><td>API, CLI</td><td>API: requires <code>OPENAI_API_KEY</code>. CLI: requires the <code>codex</code> binary.</td></tr>
+<tr><td>Google (gemini)</td><td>API, CLI</td><td>API: requires <code>GEMINI_API_KEY</code> or <code>GOOGLE_API_KEY</code>. CLI: requires the <code>gemini</code> binary.</td></tr>
+<tr><td>GitHub Copilot (gh)</td><td>CLI only</td><td>Requires <code>gh copilot</code> extension. Hidden in Direct API mode.</td></tr>
+<tr><td>Custom (OpenAI-compatible)</td><td>API only</td><td>Any endpoint implementing <code>/v1/chat/completions</code> — Ollama, LM Studio, vLLM, etc. Configure host, port, optional API key, and model name. The badge shows endpoint reachability.</td></tr>
 </table>
+<div class="tip-box">&#128161; <strong>Custom provider tip:</strong> For Ollama, set host to <code>http://localhost</code>, port to <code>11434</code>, leave API key blank, and set model to the name of a pulled model (e.g. <code>llama3.2</code>). The endpoint must be running before Attractor attempts to reach it.</div>
+
+<h3>CLI command templates</h3>
+<p>In CLI mode, each provider has an editable command template. Use <code>{prompt}</code> as the substitution placeholder for the generated prompt text.</p>
+
+<h3>System Tools</h3>
+<p>The System Tools grid shows detected binaries on the host. <strong>Required</strong> tools (<code>java</code>, <code>git</code>, <code>dot</code>) must be present for core features to work — a warning banner appears at the top of every page if any are missing. <strong>Optional</strong> tools are used by LLM-generated project stages and do not block Attractor itself.</p>
+<p>Install all required runtime tools with: <code>make install-runtime-deps</code></p>
+
 """
 
     private fun restApiTabContent(): String = """
@@ -1883,14 +1896,14 @@ export ATTRACTOR_DB_URL="mysql://app:secret@localhost:3306/attractor"</code></pr
 <div class="endpoint">
 <div class="endpoint-sig"><span class="badge badge-get">GET</span><span class="endpoint-path">/api/v1/settings/{key}</span></div>
 <p>Get a single setting. Returns 404 if the key is unknown or not set.</p>
-<pre><code>curl http://localhost:7070/api/v1/settings/fireworks_enabled</code></pre>
+<pre><code>curl http://localhost:7070/api/v1/settings/execution_mode</code></pre>
 </div>
 <div class="endpoint">
 <div class="endpoint-sig"><span class="badge badge-put">PUT</span><span class="endpoint-path">/api/v1/settings/{key}</span></div>
 <p>Update a setting. Body: <code>{"value":"..."}</code>. Returns 400 for unknown keys.</p>
-<pre><code>curl -X PUT http://localhost:7070/api/v1/settings/fireworks_enabled \
+<pre><code>curl -X PUT http://localhost:7070/api/v1/settings/execution_mode \
   -H 'Content-Type: application/json' \
-  -d '{"value":"false"}'</code></pre>
+  -d '{"value":"cli"}'</code></pre>
 </div>
 </details>
 
@@ -2866,18 +2879,6 @@ input:checked + .toggle-slider:before { transform:translateX(20px); }
       </div>
       <label class="toggle-switch">
         <input type="checkbox" id="settingDarkTheme" onchange="toggleTheme()">
-        <span class="toggle-slider"></span>
-      </label>
-    </div>
-
-    <!-- Fireworks -->
-    <div class="setting-row">
-      <div class="setting-info">
-        <div class="setting-label">Fireworks</div>
-        <div class="setting-desc">Show fireworks animation when a project completes</div>
-      </div>
-      <label class="toggle-switch">
-        <input type="checkbox" id="settingFireworks" onchange="saveSetting('fireworks_enabled', this.checked)">
         <span class="toggle-slider"></span>
       </label>
     </div>
@@ -4243,11 +4244,6 @@ function applyUpdate(data) {
     var newSt = p.state && p.state.status;
     prevStatuses[key] = newSt;
     if (isNew && selectedId === DASHBOARD_TAB_ID && _storedTab === null && !closedTabs[key]) selectedId = key;
-    // Fireworks when the viewed project transitions to completed
-    if (!isNew && prevStatus !== 'completed' && p.state && p.state.status === 'completed' && key === selectedId) {
-      var monitorView = document.getElementById('viewMonitor');
-      if (monitorView && monitorView.style.display !== 'none' && appSettings.fireworks_enabled !== false) triggerFireworks();
-    }
     // Flash dashboard card when any project transitions to completed
     if (!isNew && prevStatus !== 'completed' && newSt === 'completed') {
       flashDashCard(key);
@@ -4287,7 +4283,7 @@ function setConnected(live) {
 }
 
 var sseDelay = 500;
-var appSettings = { fireworks_enabled: true };
+var appSettings = {};
 var agentApiKeyStatus = { anthropic: false, openai: false, gemini: false };
 var agentCliStatus    = { anthropic: false, openai: false, gemini: false, copilot: false };
 
@@ -4332,8 +4328,6 @@ function loadSettings() {
     .then(function(r) { return r.json(); })
     .then(function(s) {
       appSettings = s;
-      var el = document.getElementById('settingFireworks');
-      if (el) el.checked = s.fireworks_enabled !== false;
       var anthEl = document.getElementById('settingAnthropicEnabled');
       if (anthEl) anthEl.checked = s.provider_anthropic_enabled !== false;
       var oaiEl = document.getElementById('settingOpenAIEnabled');
@@ -5910,155 +5904,6 @@ document.getElementById('errorDetailModal').addEventListener('click', function(e
   if (e.target === this) closeErrorModal();
 });
 
-// ── Fireworks ────────────────────────────────────────────────────────────────
-function triggerFireworks() {
-  if (document.getElementById('fireworksCanvas')) return;
-  var canvas = document.createElement('canvas');
-  canvas.id = 'fireworksCanvas';
-  canvas.style.cssText = 'position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:9999;';
-  document.body.appendChild(canvas);
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
-  var ctx = canvas.getContext('2d');
-
-  var COLORS = ['#ff3e3e','#ff7043','#ffd600','#ffe57f','#69ff47','#18ffff','#40c4ff','#e040fb','#ff4081','#ff6ec7','#b2ff59','#ffffff','#ff9100','#ea80fc','#00e5ff','#76ff03'];
-  var rockets = [], sparks = [];
-  var startTime = Date.now();
-  var SHOW_MS = 5000;   // total show duration
-  var LAUNCH_MS = 3400; // stop launching new rockets after this
-
-  function randColor() { return COLORS[Math.floor(Math.random() * COLORS.length)]; }
-
-  function Rocket() {
-    this.x = canvas.width * (0.1 + Math.random() * 0.8);
-    this.y = canvas.height;
-    this.vx = (Math.random() - 0.5) * 2.5;
-    this.vy = -(Math.random() * 4 + 6);
-    this.color = randColor();
-    this.trail = [];
-  }
-
-  function burst(x, y, color) {
-    var n = Math.floor(Math.random() * 80 + 120);
-    var secColor = randColor();
-    for (var i = 0; i < n; i++) {
-      var angle = (i / n) * Math.PI * 2 + Math.random() * 0.5;
-      var speed = Math.random() * 5 + 2;
-      var c = i % 3 === 0 ? secColor : (Math.random() < 0.15 ? randColor() : color);
-      sparks.push({
-        x: x, y: y,
-        vx: Math.cos(angle) * speed,
-        vy: Math.sin(angle) * speed,
-        alpha: 1,
-        decay: Math.random() * 0.012 + 0.007,
-        size: Math.random() * 4 + 1.5,
-        color: c
-      });
-    }
-    // bright flash ring
-    for (var j = 0; j < 28; j++) {
-      var a2 = (j / 28) * Math.PI * 2;
-      sparks.push({
-        x: x, y: y,
-        vx: Math.cos(a2) * (Math.random() * 3 + 9),
-        vy: Math.sin(a2) * (Math.random() * 3 + 9),
-        alpha: 1,
-        decay: 0.022,
-        size: 3,
-        color: '#fff'
-      });
-    }
-    // glitter layer — tiny fast sparks in a third color
-    var glitColor = randColor();
-    for (var k = 0; k < 40; k++) {
-      var ga = Math.random() * Math.PI * 2;
-      var gs = Math.random() * 6 + 3;
-      sparks.push({
-        x: x, y: y,
-        vx: Math.cos(ga) * gs,
-        vy: Math.sin(ga) * gs,
-        alpha: 0.85,
-        decay: Math.random() * 0.025 + 0.018,
-        size: Math.random() * 1.5 + 0.5,
-        color: glitColor
-      });
-    }
-  }
-
-  function launch() {
-    rockets.push(new Rocket());
-    if (Math.random() < 0.4) rockets.push(new Rocket()); // occasional double
-  }
-
-  launch();
-  var elapsed = 0;
-  var launchTimer = setInterval(function() {
-    elapsed += 450;
-    launch();
-    if (elapsed >= LAUNCH_MS) clearInterval(launchTimer);
-  }, 450);
-
-  function frame() {
-    var now = Date.now();
-    var age = now - startTime;
-
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    // Rockets
-    for (var i = rockets.length - 1; i >= 0; i--) {
-      var r = rockets[i];
-      r.trail.push({x: r.x, y: r.y});
-      if (r.trail.length > 10) r.trail.shift();
-      r.x += r.vx;
-      r.y += r.vy;
-      r.vy += 0.12;
-      // draw trail
-      for (var t = 0; t < r.trail.length; t++) {
-        ctx.beginPath();
-        ctx.arc(r.trail[t].x, r.trail[t].y, 1.8 * (t / r.trail.length), 0, Math.PI * 2);
-        ctx.fillStyle = r.color;
-        ctx.globalAlpha = (t / r.trail.length) * 0.55;
-        ctx.fill();
-      }
-      // rocket head
-      ctx.beginPath();
-      ctx.arc(r.x, r.y, 2.5, 0, Math.PI * 2);
-      ctx.fillStyle = '#fff';
-      ctx.globalAlpha = 1;
-      ctx.fill();
-      // explode at apex
-      if (r.vy >= -0.5) {
-        burst(r.x, r.y, r.color);
-        rockets.splice(i, 1);
-      }
-    }
-
-    // Sparks
-    for (var j = sparks.length - 1; j >= 0; j--) {
-      var s = sparks[j];
-      s.x += s.vx;
-      s.y += s.vy;
-      s.vy += 0.07;
-      s.vx *= 0.97;
-      s.alpha -= s.decay;
-      if (s.alpha <= 0) { sparks.splice(j, 1); continue; }
-      ctx.beginPath();
-      ctx.arc(s.x, s.y, s.size, 0, Math.PI * 2);
-      ctx.fillStyle = s.color;
-      ctx.globalAlpha = s.alpha;
-      ctx.fill();
-    }
-
-    ctx.globalAlpha = 1;
-
-    if (age < SHOW_MS || rockets.length > 0 || sparks.length > 0) {
-      requestAnimationFrame(frame);
-    } else {
-      canvas.remove();
-    }
-  }
-  requestAnimationFrame(frame);
-}
 </script>
 <!-- Artifact browser modal (outside all panels, always in DOM) -->
 <div class="artifact-overlay" id="artifactOverlay" onclick="if(event.target===this)closeArtifacts()">

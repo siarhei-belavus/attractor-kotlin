@@ -2052,10 +2052,10 @@
             "schema": {
               "type": "string",
               "enum": [
-                "fireworks_enabled"
+                "execution_mode"
               ]
             },
-            "example": "fireworks_enabled"
+            "example": "execution_mode"
           }
         ],
         "responses": {
@@ -2115,7 +2115,7 @@
             "schema": {
               "type": "string",
               "enum": [
-                "fireworks_enabled"
+                "execution_mode"
               ]
             }
           }
@@ -2936,7 +2936,7 @@
         "properties": {
           "key": {
             "type": "string",
-            "example": "fireworks_enabled"
+            "example": "execution_mode"
           },
           "value": {
             "type": "string",
@@ -2951,7 +2951,7 @@
           "type": "string"
         },
         "example": {
-          "fireworks_enabled": "true"
+          "execution_mode": "api"
         }
       },
       "SettingUpdateRequest": {

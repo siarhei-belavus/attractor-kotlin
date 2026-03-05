@@ -91,7 +91,7 @@ Examples:
   attractor project watch run-1700000000000-1
   attractor artifact stage-log run-1700000000000-1 writeTests
   attractor dot generate --prompt "Build a CI project"
-  attractor settings set fireworks_enabled false
+  attractor settings set execution_mode cli
   attractor events
 
 Run 'attractor <resource> --help' for resource-specific help.

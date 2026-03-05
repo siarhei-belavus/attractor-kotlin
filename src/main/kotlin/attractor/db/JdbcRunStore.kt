@@ -34,7 +34,7 @@ class JdbcRunStore(
             }
         }
         conn.createStatement().use { stmt ->
-            stmt.execute(dialect.insertDefaultSetting("fireworks_enabled", "true"))
+            stmt.execute(dialect.insertDefaultSetting("execution_mode", "api"))
         }
 
         // Migration: rename logs/ workspace path prefix → workspace/ (idempotent)

@@ -36,7 +36,7 @@ sealed class SqlDialect {
     fun createFamilyIndex(): String =
         "CREATE INDEX IF NOT EXISTS idx_project_runs_family_created ON project_runs(project_family_id, created_at)"
 
-    /** Idempotent insert for initial fireworks_enabled default setting */
+    /** Idempotent insert for a default setting */
     fun insertDefaultSetting(key: String, value: String): String = when (this) {
         is Sqlite      -> "INSERT OR IGNORE INTO settings (key, value) VALUES ('$key', '$value')"
         is Mysql       -> "INSERT IGNORE INTO settings (setting_key, setting_value) VALUES ('$key', '$value')"

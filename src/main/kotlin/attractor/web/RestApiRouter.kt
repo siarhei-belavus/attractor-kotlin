@@ -37,7 +37,6 @@ class RestApiRouter(
     private val dotGenerator = DotGenerator(store)
 
     private val KNOWN_SETTINGS = setOf(
-        "fireworks_enabled",
         "execution_mode",
         "provider_anthropic_enabled",
         "provider_openai_enabled",
@@ -992,14 +991,12 @@ class RestApiRouter(
 
     private fun handleGetSettings(ex: HttpExchange) {
         val booleanKeys = setOf(
-            "fireworks_enabled",
             "provider_anthropic_enabled",
             "provider_openai_enabled",
             "provider_gemini_enabled",
             "provider_copilot_enabled"
         )
         val defaults = mapOf(
-            "fireworks_enabled" to "true",
             "execution_mode" to "api",
             "provider_anthropic_enabled" to "true",
             "provider_openai_enabled" to "true",
@@ -1025,7 +1022,6 @@ class RestApiRouter(
     }
 
     private val SETTING_DEFAULTS = mapOf(
-        "fireworks_enabled" to "true",
         "execution_mode" to "api",
         "provider_anthropic_enabled" to "true",
         "provider_openai_enabled" to "true",

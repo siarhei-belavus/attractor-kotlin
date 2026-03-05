@@ -316,15 +316,15 @@ def build_schemas():
             "type": "object",
             "required": ["key", "value"],
             "properties": {
-                "key": {"type": "string", "example": "fireworks_enabled"},
-                "value": {"type": "string", "example": "true"},
+                "key": {"type": "string", "example": "execution_mode"},
+                "value": {"type": "string", "example": "api"},
             },
         },
         "SettingsResponse": {
             "type": "object",
             "description": "Map of all known setting keys to their current values",
             "additionalProperties": {"type": "string"},
-            "example": {"fireworks_enabled": "true"},
+            "example": {"execution_mode": "api"},
         },
         "SettingUpdateRequest": {
             "type": "object",
@@ -869,8 +869,8 @@ def build_paths():
                 "tags": ["settings"],
                 "parameters": [
                     {"name": "key", "in": "path", "required": True,
-                     "schema": {"type": "string", "enum": ["fireworks_enabled"]},
-                     "example": "fireworks_enabled"},
+                     "schema": {"type": "string", "enum": ["execution_mode"]},
+                     "example": "execution_mode"},
                 ],
                 "responses": {
                     "200": json_200("Setting"),
@@ -883,7 +883,7 @@ def build_paths():
                 "tags": ["settings"],
                 "parameters": [
                     {"name": "key", "in": "path", "required": True,
-                     "schema": {"type": "string", "enum": ["fireworks_enabled"]}},
+                     "schema": {"type": "string", "enum": ["execution_mode"]}},
                 ],
                 "requestBody": {
                     "required": True,

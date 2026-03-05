@@ -66,7 +66,6 @@ class SettingsEndpointsTest : FunSpec({
         val resp = get("/settings")
         resp.statusCode() shouldBe 200
         val body = resp.body()
-        body shouldContain "fireworks_enabled"
         body shouldContain "execution_mode"
         body shouldContain "provider_anthropic_enabled"
         body shouldContain "provider_openai_enabled"

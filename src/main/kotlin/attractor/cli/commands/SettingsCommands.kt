@@ -62,7 +62,12 @@ Verbs:
   set <key> <value> Update a setting value
 
 Known settings:
-  fireworks_enabled   Whether fireworks animation plays on project completion
+  execution_mode              api or cli
+  provider_anthropic_enabled  Enable Anthropic provider
+  provider_openai_enabled     Enable OpenAI provider
+  provider_gemini_enabled     Enable Gemini provider
+  provider_copilot_enabled    Enable GitHub Copilot provider
+  provider_custom_enabled     Enable custom OpenAI-compatible provider
         """.trimIndent())
     }
 }

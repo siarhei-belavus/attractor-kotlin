@@ -1013,7 +1013,7 @@ Returns all known settings and their current values.
 
 **Response 200:**
 ```json
-{ "fireworks_enabled": "true" }
+{ "execution_mode": "api" }
 ```
 
 **curl:**
@@ -1035,11 +1035,24 @@ Returns a single setting value. Returns 404 for unknown keys or unset values.
 
 | Key | Description |
 |---|---|
-| `fireworks_enabled` | Whether the fireworks animation plays on project completion |
+| `execution_mode` | How AI providers are invoked: `api` or `cli` |
+| `provider_anthropic_enabled` | Enable Anthropic provider |
+| `provider_openai_enabled` | Enable OpenAI provider |
+| `provider_gemini_enabled` | Enable Gemini provider |
+| `provider_copilot_enabled` | Enable GitHub Copilot provider |
+| `provider_custom_enabled` | Enable custom OpenAI-compatible provider |
+| `cli_anthropic_command` | CLI command template for Anthropic |
+| `cli_openai_command` | CLI command template for OpenAI/Codex |
+| `cli_gemini_command` | CLI command template for Gemini |
+| `cli_copilot_command` | CLI command template for Copilot |
+| `custom_api_host` | Custom API host URL |
+| `custom_api_port` | Custom API port |
+| `custom_api_key` | Custom API key (optional) |
+| `custom_api_model` | Custom API model name |
 
 **Response 200:**
 ```json
-{ "key": "fireworks_enabled", "value": "true" }
+{ "key": "execution_mode", "value": "api" }
 ```
 
 **Response 404:**
@@ -1049,7 +1062,7 @@ Returns a single setting value. Returns 404 for unknown keys or unset values.
 
 **curl:**
 ```bash
-curl http://localhost:8080/api/v1/settings/fireworks_enabled
+curl http://localhost:8080/api/v1/settings/execution_mode
 ```
 
 ---
@@ -1071,7 +1084,7 @@ Sets a setting to a new string value.
 
 **Response 200:**
 ```json
-{ "key": "fireworks_enabled", "value": "false" }
+{ "key": "execution_mode", "value": "cli" }
 ```
 
 **Response 400:**
@@ -1081,9 +1094,9 @@ Sets a setting to a new string value.
 
 **curl:**
 ```bash
-curl -X PUT http://localhost:8080/api/v1/settings/fireworks_enabled \
+curl -X PUT http://localhost:8080/api/v1/settings/execution_mode \
   -H 'Content-Type: application/json' \
-  -d '{"value":"false"}'
+  -d '{"value":"cli"}'
 ```
 
 ---

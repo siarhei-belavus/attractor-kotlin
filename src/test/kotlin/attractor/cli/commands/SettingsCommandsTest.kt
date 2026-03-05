@@ -33,7 +33,7 @@ class SettingsCommandsTest : FunSpec({
 
     test("settings list GETs /api/v1/settings and prints table") {
         val (srv, port) = startFakeServer { ex ->
-            val body = """{"fireworks_enabled":"true"}""".toByteArray()
+            val body = """{"execution_mode":"api"}""".toByteArray()
             ex.sendResponseHeaders(200, body.size.toLong())
             ex.responseBody.write(body)
         }
@@ -41,20 +41,20 @@ class SettingsCommandsTest : FunSpec({
             val output = captureStdout { cmdFor(port).dispatch(listOf("list")) }
             output shouldContain "KEY"
             output shouldContain "VALUE"
-            output shouldContain "fireworks_enabled"
-            output shouldContain "true"
+            output shouldContain "execution_mode"
+            output shouldContain "api"
         } finally { srv.stop(0) }
     }
 
     test("settings get prints key: value") {
         val (srv, port) = startFakeServer { ex ->
-            val body = """{"key":"fireworks_enabled","value":"false"}""".toByteArray()
+            val body = """{"key":"execution_mode","value":"cli"}""".toByteArray()
             ex.sendResponseHeaders(200, body.size.toLong())
             ex.responseBody.write(body)
         }
         try {
-            val output = captureStdout { cmdFor(port).dispatch(listOf("get", "fireworks_enabled")) }
-            output shouldContain "fireworks_enabled: false"
+            val output = captureStdout { cmdFor(port).dispatch(listOf("get", "execution_mode")) }
+            output shouldContain "execution_mode: cli"
         } finally { srv.stop(0) }
     }
 
@@ -66,15 +66,15 @@ class SettingsCommandsTest : FunSpec({
             method = ex.requestMethod
             path = ex.requestURI.path
             requestBody = ex.requestBody.bufferedReader().readText()
-            val body = """{"key":"fireworks_enabled","value":"false"}""".toByteArray()
+            val body = """{"key":"execution_mode","value":"cli"}""".toByteArray()
             ex.sendResponseHeaders(200, body.size.toLong())
             ex.responseBody.write(body)
         }
         try {
-            captureStdout { cmdFor(port).dispatch(listOf("set", "fireworks_enabled", "false")) }
+            captureStdout { cmdFor(port).dispatch(listOf("set", "execution_mode", "cli")) }
             method shouldBe "PUT"
-            path shouldBe "/api/v1/settings/fireworks_enabled"
-            requestBody!! shouldContain """"value":"false""""
+            path shouldBe "/api/v1/settings/execution_mode"
+            requestBody!! shouldContain """"value":"cli""""
         } finally { srv.stop(0) }
     }
 })

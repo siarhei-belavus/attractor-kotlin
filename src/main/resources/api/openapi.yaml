@@ -1240,8 +1240,8 @@ paths:
         schema:
           type: string
           enum:
-          - fireworks_enabled
-        example: fireworks_enabled
+          - execution_mode
+        example: execution_mode
       responses:
         '200':
           description: Success
@@ -1279,7 +1279,7 @@ paths:
         schema:
           type: string
           enum:
-          - fireworks_enabled
+          - execution_mode
       requestBody:
         required: true
         content:
@@ -1836,17 +1836,17 @@ components:
       properties:
         key:
           type: string
-          example: fireworks_enabled
+          example: execution_mode
         value:
           type: string
-          example: 'true'
+          example: 'api'
     SettingsResponse:
       type: object
       description: Map of all known setting keys to their current values
       additionalProperties:
         type: string
       example:
-        fireworks_enabled: 'true'
+        execution_mode: 'api'
     SettingUpdateRequest:
       type: object
       required:
