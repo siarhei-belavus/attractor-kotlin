@@ -1166,9 +1166,9 @@ class WebMonitorServer(private val requestedPort: Int, private val registry: Pro
             if (ex.requestMethod == "GET") {
                 val fireworks  = store.getSetting("fireworks_enabled") ?: "true"
                 val execMode   = store.getSetting("execution_mode") ?: "api"
-                val anthEnabled = store.getSetting("provider_anthropic_enabled") ?: "true"
-                val oaiEnabled  = store.getSetting("provider_openai_enabled") ?: "true"
-                val gemEnabled  = store.getSetting("provider_gemini_enabled") ?: "true"
+                val anthEnabled = store.getSetting("provider_anthropic_enabled") ?: "false"
+                val oaiEnabled  = store.getSetting("provider_openai_enabled") ?: "false"
+                val gemEnabled  = store.getSetting("provider_gemini_enabled") ?: "false"
                 val copilotEnabled = store.getSetting("provider_copilot_enabled") ?: "false"
                 val anthCmd    = store.getSetting("cli_anthropic_command") ?: "claude --dangerously-skip-permissions -p {prompt}"
                 val oaiCmd     = store.getSetting("cli_openai_command") ?: "codex --full-auto -p {prompt}"
@@ -1219,6 +1219,55 @@ class WebMonitorServer(private val requestedPort: Int, private val registry: Pro
                 "gemini":${detectBinary(gemCmd)},
                 "copilot":${detectBinary(copilotCmd)}
             }""".trimIndent().replace("\n", "").replace("    ", "").toByteArray()
+            ex.responseHeaders.add("Content-Type", "application/json")
+            ex.sendResponseHeaders(200, body.size.toLong())
+            ex.responseBody.use { it.write(body) }
+        }
+
+        // ── API key detection ─────────────────────────────────────────────────
+        httpServer.createContext("/api/settings/api-key-status") { ex ->
+            ex.responseHeaders.add("Access-Control-Allow-Origin", "*")
+            if (ex.requestMethod != "GET") {
+                ex.sendResponseHeaders(405, 0); ex.responseBody.close(); return@createContext
+            }
+            val env = System.getenv()
+            val anthropic = (env["ANTHROPIC_API_KEY"] ?: "").isNotBlank()
+            val openai    = (env["OPENAI_API_KEY"] ?: "").isNotBlank()
+            val gemini    = (env["GEMINI_API_KEY"] ?: env["GOOGLE_API_KEY"] ?: "").isNotBlank()
+            val body = """{"anthropic":$anthropic,"openai":$openai,"gemini":$gemini}""".toByteArray()
+            ex.responseHeaders.add("Content-Type", "application/json")
+            ex.sendResponseHeaders(200, body.size.toLong())
+            ex.responseBody.use { it.write(body) }
+        }
+
+        // ── System tool detection ─────────────────────────────────────────────
+        httpServer.createContext("/api/settings/system-tools-status") { ex ->
+            ex.responseHeaders.add("Access-Control-Allow-Origin", "*")
+            if (ex.requestMethod != "GET") {
+                ex.sendResponseHeaders(405, 0); ex.responseBody.close(); return@createContext
+            }
+            fun probe(binary: String, vararg args: String): Boolean = try {
+                ProcessBuilder(binary, *args).redirectErrorStream(true).start().waitFor() == 0
+            } catch (_: Exception) { false }
+            val results = linkedMapOf(
+                "git"     to probe("git",      "--version"),
+                "python3" to (probe("python3", "--version") || probe("python", "--version")),
+                "ruby"    to probe("ruby",     "--version"),
+                "java"    to probe("java",     "-version"),
+                "node"    to probe("node",     "--version"),
+                "go"      to probe("go",       "version"),
+                "rustc"   to probe("rustc",    "--version"),
+                "gcc"     to probe("gcc",      "--version"),
+                "gxx"     to probe("g++",      "--version"),
+                "clang"   to probe("clang",    "--version"),
+                "clangxx" to probe("clang++",  "--version"),
+                "make"    to probe("make",     "--version"),
+                "gradle"  to probe("gradle",   "--version"),
+                "mvn"     to probe("mvn",      "--version"),
+                "docker"  to probe("docker",   "--version"),
+                "curl"    to probe("curl",     "--version")
+            )
+            val body = "{${results.entries.joinToString(",") { (k,v) -> "\"$k\":$v" }}}".toByteArray()
             ex.responseHeaders.add("Content-Type", "application/json")
             ex.sendResponseHeaders(200, body.size.toLong())
             ex.responseBody.use { it.write(body) }
@@ -2183,7 +2232,7 @@ attractor artifact stage-log &lt;id&gt; &lt;nodeId&gt;</code></pre>
     private fun dashboardHtml(): String = """<!DOCTYPE html>
 <html lang="en">
 <head>
-<script>(function(){var t=localStorage.getItem('attractor-theme')||'dark';document.documentElement.setAttribute('data-theme',t);document.documentElement.style.colorScheme=t;})();</script>
+<script>(function(){var t=localStorage.getItem('attractor-theme')||'light';document.documentElement.setAttribute('data-theme',t);document.documentElement.style.colorScheme=t;})();</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Attractor</title>
@@ -2257,6 +2306,7 @@ button { font-variant-emoji: text; }
 
 /* Header */
 header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 12px 20px; display: flex; align-items: center; gap: 12px; }
+#agentWarningBanner { display:flex; align-items:center; gap:10px; padding:9px 20px; background:#7c3500; color:#fde8c8; font-size:0.85rem; border-bottom:1px solid #a04800; }
 header h1 { font-size: 1.05rem; font-weight: 600; color: var(--text-strong); flex: 1; }
 .conn-indicator { display: flex; align-items: center; gap: 5px; font-size: 0.72rem; color: var(--text-faint); }
 .conn-dot { width: 10px; height: 10px; border-radius: 50%; background: radial-gradient(circle at 35% 32%, #b0b8c4, #6e7681 55%, #3a3f47); box-shadow: 0 1px 3px rgba(0,0,0,0.5), inset 0 -1px 2px rgba(0,0,0,0.3); }
@@ -2290,6 +2340,15 @@ header h1 { font-size: 1.05rem; font-weight: 600; color: var(--text-strong); fle
 .badge-paused    { background: var(--badge-paused-bg); color: var(--badge-paused-fg); }
 @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
 .pulse { animation: pulse 1.4s infinite; }
+.badge-dot-checking { color: #d97706; animation: pulse 0.9s infinite; display:inline-block; }
+#toast { position:fixed; bottom:28px; right:28px; display:flex; align-items:center; gap:10px; padding:12px 16px 12px 14px; border-radius:10px; font-size:0.84rem; font-weight:500; min-width:200px; max-width:320px; box-shadow:0 8px 32px rgba(0,0,0,0.22), 0 1px 4px rgba(0,0,0,0.12); z-index:9999; opacity:0; transform:translateY(12px) scale(0.97); transition:opacity 0.22s ease, transform 0.22s ease; pointer-events:none; border-left:3px solid transparent; }
+#toast.toast-show { opacity:1; transform:translateY(0) scale(1); }
+#toast.toast-success { background:#f0faf4; color:#166534; border-left-color:#22c55e; box-shadow:0 8px 32px rgba(34,197,94,0.12), 0 1px 4px rgba(0,0,0,0.08); }
+#toast.toast-error   { background:#fef2f2; color:#991b1b; border-left-color:#ef4444; box-shadow:0 8px 32px rgba(239,68,68,0.12), 0 1px 4px rgba(0,0,0,0.08); }
+#toast .toast-icon { font-size:1rem; flex-shrink:0; line-height:1; }
+#toast .toast-text { line-height:1.4; }
+.api-key-hint { display:inline-flex; align-items:center; justify-content:center; width:13px; height:13px; border-radius:50%; background:var(--surface-muted); border:1px solid var(--border); color:var(--text-muted); font-size:0.65rem; font-weight:700; cursor:default; margin-left:4px; vertical-align:middle; position:relative; }
+.api-key-hint:hover::after { content:attr(data-tip); position:absolute; right:0; top:calc(100% + 5px); background:#1a1a2e; color:#f0f0f0; font-size:0.75rem; font-weight:400; white-space:nowrap; padding:5px 9px; border-radius:6px; border:1px solid #444; box-shadow:0 4px 12px rgba(0,0,0,0.35); z-index:100; pointer-events:none; }
 
 /* Main content */
 main { max-width: 1200px; margin: 0 auto; padding: 20px; display: block; }
@@ -2614,6 +2673,13 @@ main { max-width: 1200px; margin: 0 auto; padding: 20px; display: block; }
 input:checked + .toggle-slider { background:#238636; }
 input:checked + .toggle-slider:before { transform:translateX(20px); }
 
+.system-tools-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(110px, 1fr)); gap:8px; margin-top:12px; }
+.tool-badge { display:flex; flex-direction:column; gap:3px; padding:8px 10px; border-radius:7px; background:var(--surface-muted); border:1px solid var(--border); }
+.tool-badge-name { font-size:0.8rem; font-weight:600; color:var(--text-strong); font-family:monospace; }
+.tool-badge-status { font-size:0.72rem; }
+.tool-badge-status.found   { color:#3c9e5f; }
+.tool-badge-status.missing { color:#c0392b; }
+
 /* Light theme depth & style overrides */
 [data-theme="light"] header { box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
 [data-theme="light"] .tab-bar { box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
@@ -2652,6 +2718,12 @@ input:checked + .toggle-slider:before { transform:translateX(20px); }
     <span id="connDot" class="conn-dot offline" title="Offline"></span>
   </div>
 </header>
+
+<div id="agentWarningBanner" style="display:none;">
+  <span id="agentWarningIcon" style="font-size:1.1rem; flex-shrink:0;">⚠️</span>
+  <span id="agentWarningMsg"></span>
+  <button onclick="showView('settings')" style="margin-left:auto; padding:3px 12px; border-radius:5px; border:1px solid currentColor; background:transparent; color:inherit; font-size:0.8rem; cursor:pointer; white-space:nowrap; opacity:0.85;">Open Settings</button>
+</div>
 
 <div id="viewMonitor">
 <div class="tab-bar" id="tabBar">
@@ -2778,6 +2850,15 @@ input:checked + .toggle-slider:before { transform:translateX(20px); }
         <button id="modeApiBtn" onclick="setExecutionMode('api')" style="padding:6px 18px; border-radius:6px; border:1px solid var(--border); cursor:pointer; font-size:0.9rem; background:var(--surface-muted); color:var(--text);">Direct API</button>
         <button id="modeCliBtn" onclick="setExecutionMode('cli')" style="padding:6px 18px; border-radius:6px; border:1px solid var(--border); cursor:pointer; font-size:0.9rem; background:var(--surface-muted); color:var(--text);">CLI subprocess</button>
       </div>
+      <div id="apiYoloWarning" style="display:none; padding:12px 16px; border-radius:8px; border:1px solid var(--danger); background:rgba(248,81,73,0.12); color:var(--text-strong); font-size:0.85rem; line-height:1.6;">
+        <div style="display:flex; align-items:flex-start; gap:10px;">
+          <span style="font-size:1.3rem; line-height:1.2; color:var(--danger);">&#9888;&#65039;</span>
+          <div>
+            <div style="font-weight:700; color:var(--danger); margin-bottom:2px;">Direct API mode &mdash; your API keys will be used</div>
+            <div style="color:var(--text); font-size:0.8rem;">Requests are sent directly to the provider APIs using your keys. You are responsible for any usage costs incurred.</div>
+          </div>
+        </div>
+      </div>
       <div id="cliYoloWarning" style="display:none; padding:12px 16px; border-radius:8px; border:1px solid var(--danger); background:rgba(248,81,73,0.12); color:var(--text-strong); font-size:0.85rem; line-height:1.6;">
         <div style="display:flex; align-items:flex-start; gap:10px;">
           <span style="font-size:1.3rem; line-height:1.2; color:var(--danger);">&#9888;&#65039;</span>
@@ -2792,7 +2873,8 @@ input:checked + .toggle-slider:before { transform:translateX(20px); }
     <!-- Providers -->
     <div style="padding: 12px 0 4px 0;">
       <div class="setting-label" style="margin-bottom:8px;">Providers</div>
-      <div class="setting-desc" style="margin-bottom:12px;">Enable or disable individual AI providers. CLI command templates support <code>{prompt}</code> substitution.</div>
+      <div class="setting-desc" style="margin-bottom:12px;">Enable or disable individual AI providers.<span id="cliPromptHint" style="display:none;"> CLI command templates support <code>{prompt}</code> substitution.</span></div>
+      <div id="apiKeyRestartNote" style="display:none; padding:8px 12px; border-radius:7px; background:var(--surface-muted); border:1px solid var(--border); color:var(--text-muted); font-size:0.8rem; margin-bottom:12px;">&#8505;&#65039; API keys are read from environment variables at startup. Restart the application after setting a key for it to be detected.</div>
 
       <!-- Anthropic -->
       <div class="setting-row" style="flex-direction:column; align-items:flex-start; gap:6px; padding:10px 0;">
@@ -2804,6 +2886,7 @@ input:checked + .toggle-slider:before { transform:translateX(20px); }
             </label>
             <span class="setting-label">Anthropic (claude)</span>
           </div>
+          <span id="apiBadgeAnthropic" style="font-size:0.78rem; display:none;"></span>
           <span id="cliBadgeAnthropic" style="font-size:0.78rem; display:none;"></span>
         </div>
         <input id="cliCmdAnthropic" type="text" placeholder="claude --dangerously-skip-permissions -p {prompt}"
@@ -2821,6 +2904,7 @@ input:checked + .toggle-slider:before { transform:translateX(20px); }
             </label>
             <span class="setting-label">OpenAI (codex)</span>
           </div>
+          <span id="apiBadgeOpenAI" style="font-size:0.78rem; display:none;"></span>
           <span id="cliBadgeOpenAI" style="font-size:0.78rem; display:none;"></span>
         </div>
         <input id="cliCmdOpenAI" type="text" placeholder="codex --full-auto -p {prompt}"
@@ -2838,6 +2922,7 @@ input:checked + .toggle-slider:before { transform:translateX(20px); }
             </label>
             <span class="setting-label">Google (gemini)</span>
           </div>
+          <span id="apiBadgeGemini" style="font-size:0.78rem; display:none;"></span>
           <span id="cliBadgeGemini" style="font-size:0.78rem; display:none;"></span>
         </div>
         <input id="cliCmdGemini" type="text" placeholder="gemini --yolo -p {prompt}"
@@ -2862,6 +2947,19 @@ input:checked + .toggle-slider:before { transform:translateX(20px); }
           onblur="saveSetting('cli_copilot_command', this.value)">
       </div>
     </div>
+  </div>
+
+  <!-- System Tools -->
+  <div style="margin-top:28px; padding-top:24px; border-top:1px solid var(--border);">
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:4px;">
+      <h2 style="margin:0; font-size:1.05rem; font-weight:600; color:var(--text-strong);">System Tools</h2>
+      <button onclick="loadSystemToolsStatus()" style="padding:3px 12px; border-radius:6px; border:1px solid var(--border); background:var(--surface-muted); color:var(--text); font-size:0.8rem; cursor:pointer;">Re-check</button>
+    </div>
+    <div class="setting-desc" style="margin-bottom:16px;">Tools detected on the system. Required tools must be present for core features to work.</div>
+    <div class="setting-label" style="font-size:0.78rem; text-transform:uppercase; letter-spacing:0.05em; color:var(--text-muted); margin-bottom:6px;">Required</div>
+    <div id="systemToolsRequired" class="system-tools-grid" style="margin-bottom:16px;"></div>
+    <div class="setting-label" style="font-size:0.78rem; text-transform:uppercase; letter-spacing:0.05em; color:var(--text-muted); margin-bottom:6px;">Optional &mdash; depending on projects you create</div>
+    <div id="systemToolsOptional" class="system-tools-grid"></div>
   </div>
 </div>
 
@@ -4102,6 +4200,73 @@ function setConnected(live) {
 
 var sseDelay = 500;
 var appSettings = { fireworks_enabled: true };
+var agentApiKeyStatus = { anthropic: false, openai: false, gemini: false };
+var agentCliStatus    = { anthropic: false, openai: false, gemini: false, copilot: false };
+
+function updateAgentWarning() {
+  var mode = appSettings.execution_mode || 'api';
+  var banner = document.getElementById('agentWarningBanner');
+  var msg    = document.getElementById('agentWarningMsg');
+  if (!banner || !msg) return;
+
+  var isTrue = function(v) { return v === true || v === 'true'; };
+
+  var warn = null;
+
+  if (mode === 'api') {
+    var enabledApi = {
+      anthropic: isTrue(appSettings.provider_anthropic_enabled),
+      openai:    isTrue(appSettings.provider_openai_enabled),
+      gemini:    isTrue(appSettings.provider_gemini_enabled)
+    };
+    var anyEnabled = enabledApi.anthropic || enabledApi.openai || enabledApi.gemini;
+    if (!anyEnabled) {
+      warn = 'No AI providers are enabled. Enable at least one provider in Settings to use Attractor.';
+    } else {
+      var anyUsable = (enabledApi.anthropic && agentApiKeyStatus.anthropic) ||
+                      (enabledApi.openai    && agentApiKeyStatus.openai)    ||
+                      (enabledApi.gemini    && agentApiKeyStatus.gemini);
+      if (!anyUsable) {
+        var missing = [];
+        if (enabledApi.anthropic && !agentApiKeyStatus.anthropic) missing.push('ANTHROPIC_API_KEY');
+        if (enabledApi.openai    && !agentApiKeyStatus.openai)    missing.push('OPENAI_API_KEY');
+        if (enabledApi.gemini    && !agentApiKeyStatus.gemini)    missing.push('GEMINI_API_KEY');
+        warn = 'No API keys are set for the enabled providers. Set ' + missing.join(', ') + ' in your environment.';
+      }
+    }
+  } else {
+    var enabledCli = {
+      anthropic: isTrue(appSettings.provider_anthropic_enabled),
+      openai:    isTrue(appSettings.provider_openai_enabled),
+      gemini:    isTrue(appSettings.provider_gemini_enabled),
+      copilot:   isTrue(appSettings.provider_copilot_enabled)
+    };
+    var anyEnabledCli = enabledCli.anthropic || enabledCli.openai || enabledCli.gemini || enabledCli.copilot;
+    if (!anyEnabledCli) {
+      warn = 'No AI providers are enabled. Enable at least one provider in Settings to use Attractor.';
+    } else {
+      var anyUsableCli = (enabledCli.anthropic && agentCliStatus.anthropic) ||
+                         (enabledCli.openai    && agentCliStatus.openai)    ||
+                         (enabledCli.gemini    && agentCliStatus.gemini)    ||
+                         (enabledCli.copilot   && agentCliStatus.copilot);
+      if (!anyUsableCli) {
+        var notFound = [];
+        if (enabledCli.anthropic && !agentCliStatus.anthropic) notFound.push('claude');
+        if (enabledCli.openai    && !agentCliStatus.openai)    notFound.push('codex');
+        if (enabledCli.gemini    && !agentCliStatus.gemini)    notFound.push('gemini');
+        if (enabledCli.copilot   && !agentCliStatus.copilot)   notFound.push('gh copilot');
+        warn = 'No CLI tools were detected for the enabled providers. Install or configure: ' + notFound.join(', ') + '.';
+      }
+    }
+  }
+
+  if (warn) {
+    msg.textContent = warn;
+    banner.style.display = 'flex';
+  } else {
+    banner.style.display = 'none';
+  }
+}
 
 function loadSettings() {
   fetch('/api/settings')
@@ -4126,7 +4291,12 @@ function loadSettings() {
       if (gemCmd) gemCmd.value = s.cli_gemini_command || 'gemini --yolo -p {prompt}';
       var copilotCmd = document.getElementById('cliCmdCopilot');
       if (copilotCmd) copilotCmd.value = s.cli_copilot_command || 'copilot --allow-all-tools -p {prompt}';
-      applyExecutionModeUi(s.execution_mode || 'api');
+      var mode = s.execution_mode || 'api';
+      applyExecutionModeUi(mode);
+      updateAgentWarning();
+      if (mode === 'api') loadApiKeyStatus();
+      if (mode === 'cli') loadCliStatus();
+      loadSystemToolsStatus();
     })
     .catch(function() {});
 }
@@ -4135,6 +4305,7 @@ function setExecutionMode(mode) {
   saveSetting('execution_mode', mode);
   applyExecutionModeUi(mode);
   if (mode === 'cli') loadCliStatus();
+  if (mode === 'api') loadApiKeyStatus();
 }
 
 function applyExecutionModeUi(mode) {
@@ -4142,6 +4313,7 @@ function applyExecutionModeUi(mode) {
   var cliBtn = document.getElementById('modeCliBtn');
   var cliFields = ['cliCmdAnthropic', 'cliCmdOpenAI', 'cliCmdGemini', 'cliCmdCopilot'];
   var cliBadges = ['cliBadgeAnthropic', 'cliBadgeOpenAI', 'cliBadgeGemini', 'cliBadgeCopilot'];
+  var apiBadges = ['apiBadgeAnthropic', 'apiBadgeOpenAI', 'apiBadgeGemini'];
   if (apiBtn) {
     apiBtn.style.background = mode === 'api' ? 'var(--accent, #4f8ef7)' : 'var(--surface-muted)';
     apiBtn.style.color = mode === 'api' ? '#fff' : 'var(--text)';
@@ -4152,6 +4324,8 @@ function applyExecutionModeUi(mode) {
     cliBtn.style.color = mode === 'cli' ? '#fff' : 'var(--text)';
     cliBtn.style.borderColor = mode === 'cli' ? 'var(--accent, #4f8ef7)' : 'var(--border)';
   }
+  var apiYoloWarning = document.getElementById('apiYoloWarning');
+  if (apiYoloWarning) apiYoloWarning.style.display = mode === 'api' ? 'block' : 'none';
   var yoloWarning = document.getElementById('cliYoloWarning');
   if (yoloWarning) yoloWarning.style.display = mode === 'cli' ? 'block' : 'none';
   cliFields.forEach(function(id) {
@@ -4160,38 +4334,176 @@ function applyExecutionModeUi(mode) {
   });
   cliBadges.forEach(function(id) {
     var el = document.getElementById(id);
-    if (el) el.style.display = mode === 'cli' ? 'inline' : 'none';
+    if (!el) return;
+    if (mode === 'cli') {
+      el.style.display = 'inline';
+      el.className = '';
+      el.style.color = '#d97706';
+      el.innerHTML = '<span class="badge-dot-checking">checking\u2026</span>';
+    } else {
+      el.style.display = 'none';
+    }
+  });
+  apiBadges.forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) el.style.display = mode === 'api' ? 'inline' : 'none';
   });
   // Copilot is CLI-only — hide the entire row in Direct API mode
   var copilotRow = document.getElementById('copilotProviderRow');
   if (copilotRow) copilotRow.style.display = mode === 'cli' ? '' : 'none';
+  var apiKeyNote = document.getElementById('apiKeyRestartNote');
+  if (apiKeyNote) apiKeyNote.style.display = mode === 'api' ? 'block' : 'none';
+  var cliPromptHint = document.getElementById('cliPromptHint');
+  if (cliPromptHint) cliPromptHint.style.display = mode === 'cli' ? 'inline' : 'none';
 }
 
 function loadCliStatus() {
+  var ids = ['cliBadgeAnthropic', 'cliBadgeOpenAI', 'cliBadgeGemini', 'cliBadgeCopilot'];
+  ids.forEach(function(id) {
+    var el = document.getElementById(id);
+    if (!el || el.style.display === 'none') return;
+    el.className = '';
+    el.style.color = '#d97706';
+    el.innerHTML = '<span class="badge-dot-checking">checking\u2026</span>';
+  });
   fetch('/api/settings/cli-status')
     .then(function(r) { return r.json(); })
     .then(function(s) {
       function badge(id, detected) {
         var el = document.getElementById(id);
         if (!el) return;
-        el.textContent = detected ? '\u25cf detected' : '\u2717 not found';
+        el.className = '';
         el.style.color = detected ? '#3c9e5f' : '#c0392b';
+        el.innerHTML = detected ? 'detected' : 'not found';
       }
-      badge('cliBadgeAnthropic', s.anthropic);
-      badge('cliBadgeOpenAI', s.openai);
-      badge('cliBadgeGemini', s.gemini);
-      badge('cliBadgeCopilot', s.copilot);
+      function applyToggle(toggleId, detected) {
+        var toggle = document.getElementById(toggleId);
+        if (!toggle) return;
+        toggle.disabled = !detected;
+        if (!detected) toggle.checked = false;
+      }
+      badge('cliBadgeAnthropic', s.anthropic); applyToggle('settingAnthropicEnabled', s.anthropic);
+      badge('cliBadgeOpenAI',    s.openai);    applyToggle('settingOpenAIEnabled',    s.openai);
+      badge('cliBadgeGemini',    s.gemini);    applyToggle('settingGeminiEnabled',    s.gemini);
+      badge('cliBadgeCopilot',   s.copilot);   applyToggle('settingCopilotEnabled',   s.copilot);
+      agentCliStatus = { anthropic: !!s.anthropic, openai: !!s.openai, gemini: !!s.gemini, copilot: !!s.copilot };
+      updateAgentWarning();
+    })
+    .catch(function() {
+      ids.forEach(function(id) {
+        var el = document.getElementById(id);
+        if (!el) return;
+        el.className = '';
+        el.textContent = '\u2717 not found';
+        el.style.color = '#c0392b';
+      });
+      ['settingAnthropicEnabled','settingOpenAIEnabled','settingGeminiEnabled','settingCopilotEnabled'].forEach(function(id) {
+        var t = document.getElementById(id); if (t) { t.disabled = true; t.checked = false; }
+      });
+      agentCliStatus = { anthropic: false, openai: false, gemini: false, copilot: false };
+      updateAgentWarning();
+    });
+}
+
+function loadApiKeyStatus() {
+  fetch('/api/settings/api-key-status')
+    .then(function(r) { return r.json(); })
+    .then(function(s) {
+      function apiBadge(badgeId, toggleId, found, envHint) {
+        var badge = document.getElementById(badgeId);
+        if (badge) {
+          badge.style.color = found ? '#3c9e5f' : '#c0392b';
+          if (found) {
+            badge.innerHTML = '\u25cf key found';
+          } else {
+            var hint = '<span class="api-key-hint" data-tip="Set ' + envHint + ' in your environment">?</span>';
+            badge.innerHTML = '\u2717 key not set' + hint;
+          }
+        }
+        var toggle = document.getElementById(toggleId);
+        if (toggle) {
+          toggle.disabled = !found;
+          if (!found) toggle.checked = false;
+        }
+      }
+      apiBadge('apiBadgeAnthropic', 'settingAnthropicEnabled', s.anthropic, 'ANTHROPIC_API_KEY');
+      apiBadge('apiBadgeOpenAI',    'settingOpenAIEnabled',    s.openai,    'OPENAI_API_KEY');
+      apiBadge('apiBadgeGemini',    'settingGeminiEnabled',    s.gemini,    'GEMINI_API_KEY or GOOGLE_API_KEY');
+      agentApiKeyStatus = { anthropic: !!s.anthropic, openai: !!s.openai, gemini: !!s.gemini };
+      updateAgentWarning();
     })
     .catch(function() {});
 }
 
+var toastTimer = null;
+function showToast(message, type) {
+  var el = document.getElementById('toast');
+  if (!el) return;
+  if (toastTimer) clearTimeout(toastTimer);
+  var icon = type === 'success' ? '✓' : '✕';
+  el.innerHTML = '<span class="toast-icon">' + icon + '</span><span class="toast-text">' + message + '</span>';
+  el.className = 'toast-show toast-' + type;
+  toastTimer = setTimeout(function() { el.className = ''; }, 3000);
+}
+
+var systemToolsRequired = { git:'git', java:'java' };
+var systemToolsOptional = {
+  python3:'python3', ruby:'ruby', node:'node', go:'go', rustc:'rustc',
+  gcc:'gcc', gxx:'g++', clang:'clang', clangxx:'clang++',
+  make:'make', gradle:'gradle', mvn:'mvn', docker:'docker', curl:'curl'
+};
+var allSystemTools = Object.assign({}, systemToolsRequired, systemToolsOptional);
+
+function renderToolBadges(gridId, toolMap) {
+  var grid = document.getElementById(gridId);
+  if (!grid) return;
+  grid.innerHTML = Object.keys(toolMap).map(function(id) {
+    return '<div class="tool-badge" id="toolBadge_' + id + '">' +
+      '<span class="tool-badge-name">' + toolMap[id] + '</span>' +
+      '<span class="tool-badge-status"><span class="badge-dot-checking">checking\u2026</span></span>' +
+      '</div>';
+  }).join('');
+}
+
+function loadSystemToolsStatus() {
+  renderToolBadges('systemToolsRequired', systemToolsRequired);
+  renderToolBadges('systemToolsOptional', systemToolsOptional);
+  fetch('/api/settings/system-tools-status')
+    .then(function(r) { return r.json(); })
+    .then(function(s) {
+      Object.keys(allSystemTools).forEach(function(id) {
+        var badge = document.getElementById('toolBadge_' + id);
+        if (!badge) return;
+        var found = !!s[id];
+        var st = badge.querySelector('.tool-badge-status');
+        st.className = 'tool-badge-status ' + (found ? 'found' : 'missing');
+        st.textContent = found ? 'detected' : 'not found';
+      });
+    })
+    .catch(function() {
+      Object.keys(allSystemTools).forEach(function(id) {
+        var badge = document.getElementById('toolBadge_' + id);
+        if (!badge) return;
+        var st = badge.querySelector('.tool-badge-status');
+        st.className = 'tool-badge-status missing';
+        st.textContent = 'not found';
+      });
+    });
+}
+
 function saveSetting(key, value) {
   appSettings[key] = value;
+  if (key.startsWith('provider_')) updateAgentWarning();
   fetch('/api/settings/update', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ key: key, value: String(value) })
-  }).catch(function() {});
+  })
+  .then(function(r) {
+    if (r.ok) showToast('Setting saved', 'success');
+    else showToast('Failed to save setting', 'error');
+  })
+  .catch(function() { showToast('Failed to save setting', 'error'); });
 }
 
 function connectSSE() {
@@ -4568,13 +4880,13 @@ function applyTheme(t) {
   if (chk) chk.checked = (t === 'dark');
 }
 function toggleTheme() {
-  var cur = document.documentElement.getAttribute('data-theme') || 'dark';
+  var cur = document.documentElement.getAttribute('data-theme') || 'light';
   var next = cur === 'light' ? 'dark' : 'light';
   localStorage.setItem('attractor-theme', next);
   applyTheme(next);
 }
 function initTheme() {
-  var saved = localStorage.getItem('attractor-theme') || 'dark';
+  var saved = localStorage.getItem('attractor-theme') || 'light';
   applyTheme(saved);
 }
 
@@ -5658,6 +5970,7 @@ function triggerFireworks() {
     </div>
   </div>
 </div>
+<div id="toast"></div>
 </body>
 </html>"""
 }
