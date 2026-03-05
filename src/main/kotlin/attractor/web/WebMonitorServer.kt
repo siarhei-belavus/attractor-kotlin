@@ -1171,7 +1171,7 @@ class WebMonitorServer(private val requestedPort: Int, private val registry: Pro
                 val gemEnabled  = store.getSetting("provider_gemini_enabled") ?: "false"
                 val copilotEnabled = store.getSetting("provider_copilot_enabled") ?: "false"
                 val anthCmd    = store.getSetting("cli_anthropic_command") ?: "claude --dangerously-skip-permissions -p {prompt}"
-                val oaiCmd     = store.getSetting("cli_openai_command") ?: "codex --full-auto -p {prompt}"
+                val oaiCmd     = store.getSetting("cli_openai_command") ?: "codex exec --full-auto {prompt}"
                 val gemCmd     = store.getSetting("cli_gemini_command") ?: "gemini --yolo -p {prompt}"
                 val copilotCmd = store.getSetting("cli_copilot_command") ?: "copilot --allow-all-tools -p {prompt}"
                 val body = """{
@@ -1210,7 +1210,7 @@ class WebMonitorServer(private val requestedPort: Int, private val registry: Pro
                 } catch (_: Exception) { false }
             }
             val anthCmd    = store.getSetting("cli_anthropic_command") ?: "claude --dangerously-skip-permissions -p {prompt}"
-            val oaiCmd     = store.getSetting("cli_openai_command") ?: "codex --full-auto -p {prompt}"
+            val oaiCmd     = store.getSetting("cli_openai_command") ?: "codex exec --full-auto {prompt}"
             val gemCmd     = store.getSetting("cli_gemini_command") ?: "gemini --yolo -p {prompt}"
             val copilotCmd = store.getSetting("cli_copilot_command") ?: "copilot --allow-all-tools -p {prompt}"
             val body = """{
@@ -1251,6 +1251,7 @@ class WebMonitorServer(private val requestedPort: Int, private val registry: Pro
             } catch (_: Exception) { false }
             val results = linkedMapOf(
                 "git"     to probe("git",      "--version"),
+                "dot"     to probe("dot",      "-V"),
                 "python3" to (probe("python3", "--version") || probe("python", "--version")),
                 "ruby"    to probe("ruby",     "--version"),
                 "java"    to probe("java",     "-version"),
@@ -2236,6 +2237,7 @@ attractor artifact stage-log &lt;id&gt; &lt;nodeId&gt;</code></pre>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Attractor</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%234f46e5'/%3E%3Ctext x='50%25' y='50%25' font-size='20' text-anchor='middle' dominant-baseline='central'%3E%E2%9A%A1%3C/text%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -2744,7 +2746,15 @@ input:checked + .toggle-slider:before { transform:translateX(20px); }
 </div>
 
 <!-- Create view -->
-<div id="viewCreate" style="display:none;">
+<div id="viewCreate" style="display:none; position:relative;">
+  <div id="noAgentOverlay" style="display:none; position:absolute; inset:0; z-index:50; background:rgba(0,0,0,0.45); backdrop-filter:blur(2px); align-items:center; justify-content:center;">
+    <div style="background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:36px 40px; max-width:440px; width:90%; text-align:center; box-shadow:0 16px 48px rgba(0,0,0,0.3);">
+      <div style="font-size:2.4rem; margin-bottom:12px;">⚡</div>
+      <h2 style="margin:0 0 10px; font-size:1.15rem; color:var(--text-strong);">No Agent Configured</h2>
+      <p style="margin:0 0 24px; font-size:0.88rem; color:var(--text-muted); line-height:1.6;">At least one AI provider must be configured and enabled before you can create a project. Go to Settings to set up a provider.</p>
+      <button onclick="showView('settings')" style="padding:9px 24px; border-radius:7px; border:none; background:var(--accent,#4f46e5); color:#fff; font-size:0.9rem; font-weight:600; cursor:pointer;">Open Settings</button>
+    </div>
+  </div>
   <div class="create-layout">
     <div class="create-col">
       <div class="create-section">
@@ -2754,7 +2764,10 @@ input:checked + .toggle-slider:before { transform:translateX(20px); }
           <span style="font-size:0.82rem;color:var(--text-muted);">or <a class="dot-upload-link" onclick="document.getElementById('dotFileInput').click();return false;" href="#">upload an existing .dot file</a></span>
         </div>
         <textarea id="nlInput" class="nl-textarea"
-          placeholder="e.g. &quot;Write comprehensive unit tests for a Python web app, run them, fix any failures, then generate a coverage report&quot;&#10;&#10;Describe what you want in plain English. The project will be generated automatically as you type."></textarea>
+          placeholder="e.g. &quot;Write comprehensive unit tests for a Python web app, run them, fix any failures, then generate a coverage report&quot;&#10;&#10;Describe what you want in plain English, then click Generate."></textarea>
+        <div style="display:flex; justify-content:flex-end; margin-top:6px;">
+          <button id="generateBtn" onclick="triggerGenerate()" disabled style="padding:5px 16px; border-radius:6px; border:1px solid var(--border); background:var(--surface-muted); color:var(--text); font-size:0.82rem; font-weight:500; cursor:pointer;">Generate</button>
+        </div>
         <div class="create-options-row">
           <label class="checkbox-row"><input type="checkbox" id="createSimulate"> Simulate (no LLM calls)</label>
           <label class="checkbox-row"><input type="checkbox" id="createAutoApprove" checked> Auto-approve gates</label>
@@ -2912,7 +2925,7 @@ input:checked + .toggle-slider:before { transform:translateX(20px); }
           <span id="apiBadgeOpenAI" style="font-size:0.78rem; display:none;"></span>
           <span id="cliBadgeOpenAI" style="font-size:0.78rem; display:none;"></span>
         </div>
-        <input id="cliCmdOpenAI" type="text" placeholder="codex --full-auto -p {prompt}"
+        <input id="cliCmdOpenAI" type="text" placeholder="codex exec --full-auto {prompt}"
           style="display:none; width:100%; box-sizing:border-box; padding:6px 10px; border:1px solid var(--border); border-radius:6px; background:var(--surface-muted); color:var(--text); font-size:0.85rem; font-family:monospace;"
           onblur="saveSetting('cli_openai_command', this.value)">
       </div>
@@ -4208,69 +4221,40 @@ var appSettings = { fireworks_enabled: true };
 var agentApiKeyStatus = { anthropic: false, openai: false, gemini: false };
 var agentCliStatus    = { anthropic: false, openai: false, gemini: false, copilot: false };
 
+function hasUsableAgent() {
+  var isTrue = function(v) { return v === true || v === 'true'; };
+  return isTrue(appSettings.provider_anthropic_enabled) ||
+         isTrue(appSettings.provider_openai_enabled)    ||
+         isTrue(appSettings.provider_gemini_enabled)    ||
+         isTrue(appSettings.provider_copilot_enabled);
+}
+
+function applyCreatePageAgentState() {
+  var usable = hasUsableAgent();
+  var overlay = document.getElementById('noAgentOverlay');
+  if (overlay) overlay.style.display = usable ? 'none' : 'flex';
+  var inputs = ['nlInput', 'dotPreview', 'createSimulate', 'createAutoApprove', 'generateBtn', 'runBtn'];
+  inputs.forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) el.disabled = !usable;
+  });
+  var uploadLink = document.querySelector('.dot-upload-link');
+  if (uploadLink) uploadLink.style.pointerEvents = usable ? '' : 'none';
+}
+
 function updateAgentWarning() {
-  var mode = appSettings.execution_mode || 'api';
   var banner = document.getElementById('agentWarningBanner');
   var msg    = document.getElementById('agentWarningMsg');
   if (!banner || !msg) return;
 
-  var isTrue = function(v) { return v === true || v === 'true'; };
-
-  var warn = null;
-
-  if (mode === 'api') {
-    var enabledApi = {
-      anthropic: isTrue(appSettings.provider_anthropic_enabled),
-      openai:    isTrue(appSettings.provider_openai_enabled),
-      gemini:    isTrue(appSettings.provider_gemini_enabled)
-    };
-    var anyEnabled = enabledApi.anthropic || enabledApi.openai || enabledApi.gemini;
-    if (!anyEnabled) {
-      warn = 'No AI providers are enabled. Enable at least one provider in Settings to use Attractor.';
-    } else {
-      var anyUsable = (enabledApi.anthropic && agentApiKeyStatus.anthropic) ||
-                      (enabledApi.openai    && agentApiKeyStatus.openai)    ||
-                      (enabledApi.gemini    && agentApiKeyStatus.gemini);
-      if (!anyUsable) {
-        var missing = [];
-        if (enabledApi.anthropic && !agentApiKeyStatus.anthropic) missing.push('ANTHROPIC_API_KEY');
-        if (enabledApi.openai    && !agentApiKeyStatus.openai)    missing.push('OPENAI_API_KEY');
-        if (enabledApi.gemini    && !agentApiKeyStatus.gemini)    missing.push('GEMINI_API_KEY');
-        warn = 'No API keys are set for the enabled providers. Set ' + missing.join(', ') + ' in your environment.';
-      }
-    }
-  } else {
-    var enabledCli = {
-      anthropic: isTrue(appSettings.provider_anthropic_enabled),
-      openai:    isTrue(appSettings.provider_openai_enabled),
-      gemini:    isTrue(appSettings.provider_gemini_enabled),
-      copilot:   isTrue(appSettings.provider_copilot_enabled)
-    };
-    var anyEnabledCli = enabledCli.anthropic || enabledCli.openai || enabledCli.gemini || enabledCli.copilot;
-    if (!anyEnabledCli) {
-      warn = 'No AI providers are enabled. Enable at least one provider in Settings to use Attractor.';
-    } else {
-      var anyUsableCli = (enabledCli.anthropic && agentCliStatus.anthropic) ||
-                         (enabledCli.openai    && agentCliStatus.openai)    ||
-                         (enabledCli.gemini    && agentCliStatus.gemini)    ||
-                         (enabledCli.copilot   && agentCliStatus.copilot);
-      if (!anyUsableCli) {
-        var notFound = [];
-        if (enabledCli.anthropic && !agentCliStatus.anthropic) notFound.push('claude');
-        if (enabledCli.openai    && !agentCliStatus.openai)    notFound.push('codex');
-        if (enabledCli.gemini    && !agentCliStatus.gemini)    notFound.push('gemini');
-        if (enabledCli.copilot   && !agentCliStatus.copilot)   notFound.push('gh copilot');
-        warn = 'No CLI tools were detected for the enabled providers. Install or configure: ' + notFound.join(', ') + '.';
-      }
-    }
-  }
-
-  if (warn) {
-    msg.textContent = warn;
+  var anyEnabled = hasUsableAgent();
+  if (!anyEnabled) {
+    msg.textContent = 'No AI providers are enabled. Enable at least one provider in Settings to use Attractor.';
     banner.style.display = 'flex';
   } else {
     banner.style.display = 'none';
   }
+  applyCreatePageAgentState();
 }
 
 function loadSettings() {
@@ -4291,7 +4275,7 @@ function loadSettings() {
       var anthCmd = document.getElementById('cliCmdAnthropic');
       if (anthCmd) anthCmd.value = s.cli_anthropic_command || 'claude --dangerously-skip-permissions -p {prompt}';
       var oaiCmd = document.getElementById('cliCmdOpenAI');
-      if (oaiCmd) oaiCmd.value = s.cli_openai_command || 'codex --full-auto -p {prompt}';
+      if (oaiCmd) oaiCmd.value = s.cli_openai_command || 'codex exec --full-auto {prompt}';
       var gemCmd = document.getElementById('cliCmdGemini');
       if (gemCmd) gemCmd.value = s.cli_gemini_command || 'gemini --yolo -p {prompt}';
       var copilotCmd = document.getElementById('cliCmdCopilot');
@@ -4299,6 +4283,7 @@ function loadSettings() {
       var mode = s.execution_mode || 'api';
       applyExecutionModeUi(mode);
       updateAgentWarning();
+      applyCreatePageAgentState();
       if (mode === 'api') loadApiKeyStatus();
       if (mode === 'cli') loadCliStatus();
       loadSystemToolsStatus();
@@ -4451,7 +4436,7 @@ function showToast(message, type) {
   toastTimer = setTimeout(function() { el.className = ''; }, 3000);
 }
 
-var systemToolsRequired = { git:'git', java:'java' };
+var systemToolsRequired = { git:'git', java:'java', dot:'dot (graphviz)' };
 var requiredToolsStatus = {};
 var systemToolsOptional = {
   python3:'python3', ruby:'ruby', node:'node', go:'go', rustc:'rustc',
@@ -4592,7 +4577,7 @@ function enterIterateMode(id, dot, prompt) {
   }
   if (runBtn) { runBtn.disabled = false; runBtn.innerHTML = '&#9654;&ensp;Iterate'; }
   if (cancelBtn) cancelBtn.style.display = 'inline-block';
-  setGenStatus('', 'Iterate mode \u2014 edit description to regenerate automatically, or edit DOT directly.');
+  setGenStatus('', 'Iterate mode \u2014 edit description and click Generate, or edit DOT directly.');
   renderGraph();
 }
 
@@ -4779,6 +4764,7 @@ function showView(name) {
   document.getElementById('navCreate').classList.toggle('active', isCreate);
   document.getElementById('navArchived').classList.toggle('active', isArchived);
   document.getElementById('navSettings').classList.toggle('active', isSettings);
+  if (isCreate) applyCreatePageAgentState();
   if (isArchived) renderArchivedView();
   if (isSettings) {
     loadSettings();
@@ -4923,42 +4909,15 @@ document.addEventListener('DOMContentLoaded', function() {
   try { savedView = localStorage.getItem('activeView') || ''; } catch(e) {}
   if (savedView === 'create' || savedView === 'archived' || savedView === 'settings') showView(savedView);
   document.getElementById('nlInput').addEventListener('input', function() {
-    clearTimeout(genDebounce);
-    clearInterval(genCountdown);
-    var prompt = this.value.trim();
-    var verb = iterateSourceId ? 'Modifying' : 'Generating';
-    if (!prompt) {
-      if (iterateSourceId) {
-        setGenStatus('', 'Iterate mode \u2014 edit description to regenerate automatically, or edit DOT directly.');
-      } else {
-        setGenStatus('', 'Start typing to generate\u2026');
-        document.getElementById('runBtn').disabled = true;
-      }
-      return;
+    var hasPrompt = !!this.value.trim();
+    var generateBtn = document.getElementById('generateBtn');
+    if (generateBtn) generateBtn.disabled = !hasPrompt;
+    if (!hasPrompt) {
+      setGenStatus('', iterateSourceId
+        ? 'Iterate mode \u2014 edit description and click Generate, or edit DOT directly.'
+        : 'Describe your project, then click Generate\u2026');
+      document.getElementById('runBtn').disabled = true;
     }
-    document.getElementById('runBtn').disabled = true;
-
-    // Show countdown while user has stopped typing
-    var remaining = GEN_DELAY_SECS;
-    setGenStatus('', verb + ' in ' + remaining + 's\u2026');
-    genCountdown = setInterval(function() {
-      remaining--;
-      if (remaining > 0) {
-        setGenStatus('', verb + ' in ' + remaining + 's\u2026');
-      } else {
-        clearInterval(genCountdown);
-      }
-    }, 1000);
-
-    genDebounce = setTimeout(function() {
-      clearInterval(genCountdown);
-      setGenStatus('loading', verb + '\u2026');
-      if (iterateSourceId) {
-        modifyDot(prompt, document.getElementById('dotPreview').value.trim());
-      } else {
-        generateDot(prompt);
-      }
-    }, GEN_DELAY_SECS * 1000);
   });
 
   document.getElementById('dotPreview').addEventListener('input', function() {
@@ -4984,6 +4943,11 @@ function setGenStatus(cls, msg) {
   var el = document.getElementById('genStatus');
   el.className = 'gen-status' + (cls ? ' ' + cls : '');
   el.textContent = msg;
+  if (cls === 'ok' || cls === 'error') {
+    var generateBtn = document.getElementById('generateBtn');
+    var hasPrompt = !!((document.getElementById('nlInput') || {}).value || '').trim();
+    if (generateBtn) generateBtn.disabled = !hasPrompt;
+  }
 }
 
 function onDotFileSelected() {
@@ -5053,6 +5017,20 @@ function describeUploadedDot(dotSource) {
     read();
   })
   .catch(function() {});
+}
+
+function triggerGenerate() {
+  var prompt = (document.getElementById('nlInput').value || '').trim();
+  if (!prompt) return;
+  var verb = iterateSourceId ? 'Modifying' : 'Generating';
+  setGenStatus('loading', verb + '\u2026');
+  var generateBtn = document.getElementById('generateBtn');
+  if (generateBtn) generateBtn.disabled = true;
+  if (iterateSourceId) {
+    modifyDot(prompt, document.getElementById('dotPreview').value.trim());
+  } else {
+    generateDot(prompt);
+  }
 }
 
 function generateDot(prompt) {
