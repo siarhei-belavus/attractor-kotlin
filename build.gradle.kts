@@ -18,9 +18,10 @@ fun gitVersion(): String {
 
     fun isDirty(): Boolean = cmd("git", "status", "--porcelain").second.isNotEmpty()
 
-    val (tagExit, tagOut) = cmd("git", "describe", "--tags", "--exact-match", "HEAD")
+    val (tagExit, tagOut) = cmd("git", "tag", "--points-at", "HEAD", "--sort=-version:refname")
     if (tagExit == 0 && tagOut.isNotEmpty()) {
-        return if (isDirty()) "$tagOut-dirty" else tagOut
+        val tag = tagOut.lines().first()
+        return if (isDirty()) "$tag-dirty" else tag
     }
     val sha = cmd("git", "rev-parse", "--short", "HEAD").second.ifEmpty { "unknown" }
     return if (isDirty()) "$sha-dirty" else sha
