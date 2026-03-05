@@ -65,7 +65,7 @@ run-jar: jar
 # Dev mode: watch src/**/*.kt and rebuild + restart the server on any change.
 # Requires entr — install with: brew install entr
 dev:
-	@WEB_PORT=$(WEB_PORT) JAVA_HOME=$(JAVA_HOME) ./dev.sh
+	@WEB_PORT=$(WEB_PORT) JAVA_HOME=$(JAVA_HOME) ./scripts/dev.sh
 
 jar:
 	$(GRADLEW) jar
