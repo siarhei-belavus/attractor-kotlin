@@ -124,6 +124,24 @@ class DatabaseConfigTest : FunSpec({
         config.jdbcUrl shouldBe "jdbc:sqlite:my.db"
     }
 
+    test("blank ATTRACTOR_DB_URL is treated as absent and defaults to SQLite") {
+        val config = DatabaseConfig.fromEnv(mapOf("ATTRACTOR_DB_URL" to ""))
+        config.type    shouldBe DbType.SQLITE
+        config.jdbcUrl shouldBe "jdbc:sqlite:attractor.db"
+    }
+
+    test("whitespace-only ATTRACTOR_DB_URL is treated as absent and defaults to SQLite") {
+        val config = DatabaseConfig.fromEnv(mapOf("ATTRACTOR_DB_URL" to "   "))
+        config.type    shouldBe DbType.SQLITE
+        config.jdbcUrl shouldBe "jdbc:sqlite:attractor.db"
+    }
+
+    test("blank ATTRACTOR_DB_TYPE is treated as absent and defaults to SQLite") {
+        val config = DatabaseConfig.fromEnv(mapOf("ATTRACTOR_DB_TYPE" to ""))
+        config.type    shouldBe DbType.SQLITE
+        config.jdbcUrl shouldBe "jdbc:sqlite:attractor.db"
+    }
+
     test("unknown ATTRACTOR_DB_TYPE throws IllegalArgumentException with hint") {
         val ex = shouldThrow<IllegalArgumentException> {
             DatabaseConfig.fromEnv(mapOf("ATTRACTOR_DB_TYPE" to "oracle"))

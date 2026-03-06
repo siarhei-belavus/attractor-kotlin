@@ -11,13 +11,13 @@ data class DatabaseConfig(
 ) {
     companion object {
         fun fromEnv(env: Map<String, String> = System.getenv()): DatabaseConfig {
-            val urlRaw = env["ATTRACTOR_DB_URL"]
+            val urlRaw = env["ATTRACTOR_DB_URL"]?.takeIf { it.isNotBlank() }
 
             if (urlRaw != null) {
                 return fromUrl(urlRaw)
             }
 
-            val typeRaw = env["ATTRACTOR_DB_TYPE"]?.lowercase()
+            val typeRaw = env["ATTRACTOR_DB_TYPE"]?.takeIf { it.isNotBlank() }?.lowercase()
 
             if (typeRaw == null || typeRaw == "sqlite") {
                 val name = env["ATTRACTOR_DB_NAME"] ?: "attractor.db"
