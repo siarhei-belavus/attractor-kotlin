@@ -39,6 +39,12 @@ attractor [--host <url>] [--output text|json] [--help] [--version]
 | `--help` | — | Show help (works at any level) |
 | `--version` | — | Print version string |
 
+## Environment Variables
+
+| Variable | Description |
+|----------|-------------|
+| `ATTRACTOR_HOST` | Default server base URL. Overrides the `--host` flag default. Set in your shell profile to avoid passing `--host` on every invocation (e.g. `export ATTRACTOR_HOST=http://attractor.example.com:7070`). |
+
 ## Resources
 
 ### project — 15 commands

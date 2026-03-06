@@ -224,6 +224,30 @@ Attractor creates the database schema automatically on first start. A misconfigu
 
 > **Custom provider tip:** For Ollama, set host to `http://localhost`, port to `11434`, leave API key blank, and set model to the name of a pulled model (e.g. `llama3.2`). The endpoint must be running before Attractor attempts to reach it.
 
+### Direct API — Advanced Options
+
+These environment variables override the default API endpoints. Useful for proxies, private deployments, or Azure-compatible endpoints.
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `ATTRACTOR_ANTHROPIC_BASE_URL` | `https://api.anthropic.com` | Override Anthropic API base URL |
+| `ATTRACTOR_OPENAI_BASE_URL` | `https://api.openai.com` | Override OpenAI API base URL |
+| `ATTRACTOR_OPENAI_ORG_ID` | — | OpenAI organization ID (sent as `OpenAI-Organization` header) |
+| `ATTRACTOR_OPENAI_PROJECT_ID` | — | OpenAI project ID (sent as `OpenAI-Project` header) |
+| `ATTRACTOR_GEMINI_BASE_URL` | `https://generativelanguage.googleapis.com` | Override Gemini API base URL |
+
+### Custom Provider Bootstrap
+
+These environment variables seed the Custom provider's Settings UI on first start. Values saved through the Settings UI take precedence on subsequent starts.
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `ATTRACTOR_CUSTOM_API_ENABLED` | `false` | Set to `true` to enable the custom provider on startup |
+| `ATTRACTOR_CUSTOM_API_HOST` | `http://localhost` | Base URL of the OpenAI-compatible endpoint |
+| `ATTRACTOR_CUSTOM_API_PORT` | `11434` | Port number (leave blank to omit from URL) |
+| `ATTRACTOR_CUSTOM_API_KEY` | — | API key (optional — Ollama does not require one) |
+| `ATTRACTOR_CUSTOM_API_MODEL` | `llama3.2` | Model name to use for requests |
+
 ### CLI command templates
 
 In CLI mode, each provider has an editable command template. Use `{prompt}` as the substitution placeholder for the generated prompt text.
@@ -233,3 +257,11 @@ In CLI mode, each provider has an editable command template. Use `{prompt}` as t
 The System Tools grid shows detected binaries on the host. **Required** tools (`java`, `git`, `graphviz`) must be present for core features to work — a warning banner appears at the top of every page if any are missing. **Optional** tools are used by LLM-generated project stages and do not block Attractor itself.
 
 Install all required runtime tools with: `make install-runtime-deps`
+
+## Debug Mode
+
+Set `ATTRACTOR_DEBUG` to any non-empty value to enable verbose logging and full stack traces in error output.
+
+```bash
+ATTRACTOR_DEBUG=1 make run
+```
