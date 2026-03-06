@@ -14,7 +14,7 @@ fun main(args: Array<String>) {
 
 internal fun run(args: List<String>, env: Map<String, String> = System.getenv()) {
     // Parse global flags — precedence: --host flag > ATTRACTOR_HOST env var > default
-    var host = env["ATTRACTOR_HOST"] ?: "http://localhost:8080"
+    var host = env["ATTRACTOR_HOST"] ?: "http://localhost:7070"
     var outputFormat = OutputFormat.TEXT
     val remaining = mutableListOf<String>()
     var i = 0
@@ -72,7 +72,7 @@ Usage:
   attractor [--host <url>] [--output <text|json>] <resource> <verb> [options]
 
 Global options:
-  --host <url>        Attractor server URL (overrides ATTRACTOR_HOST; default: http://localhost:8080)
+  --host <url>        Attractor server URL (overrides ATTRACTOR_HOST; default: http://localhost:7070)
   --output <format>   Output format: text (default) or json
   --help              Show this help
   --version           Print version

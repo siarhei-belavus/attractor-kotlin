@@ -23,12 +23,12 @@ class WebMonitorServerBrowserApiTest : FunSpec({
     beforeSpec {
         tmpDb = Files.createTempFile("browser-api-test-", ".db").toFile()
         store = SqliteRunStore(tmpDb!!.absolutePath)
-        val reg = ProjectRegistry(store!!)
+        val reg = ProjectRegistry(store)
         // Pre-register a project for happy-path tests
         reg.register(testRunId, "test.dot", "digraph T { start [shape=Mdiamond] exit [shape=Msquare] start -> exit }", familyId = "browser-api-family-1")
-        server = WebMonitorServer(0, reg, store!!)
-        server!!.start()
-        port = server!!.port
+        server = WebMonitorServer(0, reg, store)
+        server.start()
+        port = server.port
     }
 
     afterSpec {

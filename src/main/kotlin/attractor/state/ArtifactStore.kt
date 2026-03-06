@@ -34,7 +34,7 @@ class ArtifactStore(private val baseDir: String? = null) {
         val isFileBacked = size > FILE_BACKING_THRESHOLD && baseDir != null
 
         val storedData: Any
-        if (isFileBacked && baseDir != null) {
+        if (isFileBacked) {
             val artDir = File(baseDir, "artifacts")
             artDir.mkdirs()
             val artFile = File(artDir, "$artifactId.json")

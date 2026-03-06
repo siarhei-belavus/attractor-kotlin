@@ -747,7 +747,7 @@ class RestApiRouter(
             errorResponse(ex, 400, "project-meta.json not found in zip", "BAD_REQUEST"); return
         }
         val meta = try {
-            requestJson.parseToJsonElement(metaText!!).jsonObject
+            requestJson.parseToJsonElement(metaText).jsonObject
         } catch (e: Exception) {
             errorResponse(ex, 400, "invalid project-meta.json", "BAD_REQUEST"); return
         }

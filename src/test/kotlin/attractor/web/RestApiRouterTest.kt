@@ -271,7 +271,7 @@ class RestApiRouterTest : FunSpec({
         // Set a logsRoot so we get past the "blank logsRoot" check
         val tmpLogsDir = Files.createTempDirectory("attractor-logs-").toFile()
         try {
-            registry!!.setLogsRoot("trav-test-run", tmpLogsDir.absolutePath)
+            registry.setLogsRoot("trav-test-run", tmpLogsDir.absolutePath)
             val resp = get("/projects/trav-test-run/artifacts/../../etc/passwd")
             resp.statusCode() shouldBe 404
             resp.body() shouldContain "NOT_FOUND"

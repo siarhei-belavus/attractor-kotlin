@@ -22,9 +22,9 @@ class CreateDotUploadTest : FunSpec({
     beforeSpec {
         tmpDb = Files.createTempFile("dot-upload-test-", ".db").toFile()
         store = SqliteRunStore(tmpDb!!.absolutePath)
-        server = WebMonitorServer(0, ProjectRegistry(store!!), store!!)
-        server!!.start()
-        port = server!!.port
+        server = WebMonitorServer(0, ProjectRegistry(store), store)
+        server.start()
+        port = server.port
     }
 
     afterSpec {
