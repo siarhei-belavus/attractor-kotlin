@@ -48,23 +48,18 @@ dependencies {
     testImplementation(kotlin("test"))
 }
 
+kotlin { jvmToolchain(25) }
+
 application {
     mainClass.set("attractor.MainKt")
 }
 
-tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
-    kotlinOptions {
-        jvmTarget = "25"
-    }
-}
-
-tasks.withType<JavaCompile> {
-    sourceCompatibility = "25"
-    targetCompatibility = "25"
-}
-
 tasks.test {
     useJUnitPlatform()
+    testLogging {
+        events("passed", "skipped", "failed")
+        showStandardStreams = false
+    }
 }
 
 distributions {
