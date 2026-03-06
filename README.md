@@ -113,6 +113,31 @@ java -jar build/libs/attractor-server-1.0.0.jar [options]
 | `--projects-root <dir>` | Directory for logs and artifacts (default: `logs/<name>-<timestamp>`) |
 | `--web-port <n>` | Web interface port (default: `7070`) |
 
+## Docker
+
+Pre-built images are published to the GitHub Container Registry on every release:
+
+| Image | Description |
+|-------|-------------|
+| `ghcr.io/coreydaley/attractor` | Server image — pull and run this one |
+| `ghcr.io/coreydaley/attractor-base` | Base image (Ubuntu 24.04 + Java 25 + system tools); only rebuilt when the base changes |
+
+```bash
+# Quickest start — uses Docker Compose with SQLite
+cp .env.example .env   # add your API keys
+make docker-up
+
+# Or with Ollama for local LLM inference
+make docker-up PROFILES=ollama
+
+# Or with PostgreSQL
+make docker-up PROFILES=postgres
+```
+
+API keys and other configuration are passed as environment variables — never baked into the image. Copy `.env.example` to `.env` and fill in the values you need.
+
+Full documentation: https://attractor.coreydaley.dev/docker/
+
 ### Environment Variables
 
 | Variable | Description |
