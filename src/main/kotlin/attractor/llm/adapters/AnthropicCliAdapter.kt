@@ -7,11 +7,11 @@ import java.util.UUID
 /**
  * Anthropic CLI-backed ProviderAdapter.
  * Invokes the `claude` CLI binary (or a custom command template) via ProcessBuilder.
- * The command template must contain `{prompt}` which is substituted with the full prompt text.
- * Example template: "claude --dangerously-skip-permissions -p {prompt}"
+ * The command template supports `{prompt}` and `{model}` substitution.
+ * Example template: "claude --dangerously-skip-permissions --model {model} -p {prompt}"
  */
 class AnthropicCliAdapter(
-    private val commandTemplate: String = "claude --dangerously-skip-permissions -p {prompt}",
+    private val commandTemplate: String = "claude --dangerously-skip-permissions --model {model} -p {prompt}",
     private val runner: ProcessRunner = DefaultProcessRunner
 ) : ProviderAdapter {
 
@@ -105,15 +105,18 @@ class AnthropicCliAdapter(
 
 internal fun buildArgs(commandTemplate: String, request: Request): List<String> {
     val promptText = buildPromptText(request)
+    val model = request.model
     val tokens = commandTemplate.trim().split("\\s+".toRegex())
     val args = mutableListOf<String>()
     var promptInserted = false
     for (token in tokens) {
-        if (token == "{prompt}") {
-            args.add(promptText)
-            promptInserted = true
-        } else {
-            args.add(token)
+        when (token) {
+            "{prompt}" -> {
+                args.add(promptText)
+                promptInserted = true
+            }
+            "{model}" -> args.add(model)
+            else -> args.add(token)
         }
     }
     if (!promptInserted) args.add(promptText)

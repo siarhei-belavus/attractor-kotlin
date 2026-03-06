@@ -21,7 +21,7 @@ Attractor projects are defined using the [Graphviz DOT language](https://graphvi
 | Multiple outgoing edges | **Parallel Fan-out** | When a non-conditional node has multiple outgoing edges, all target nodes run concurrently. |
 | `shape=component` | **Parallel Fan-out** *(explicit)* | Marks this node explicitly as a parallel fan-out point. All outgoing edges run their target nodes concurrently. Makes the intent unambiguous in the graph source. |
 | `shape=tripleoctagon` | **Parallel Fan-in** | Waits for all concurrent branches to complete before continuing. Use as the merge/join point after a `component` fan-out node. |
-| `shape=parallelogram` | **Tool Node** *(advanced)* | Executes a deterministic tool or script stage rather than dispatching an LLM prompt. The `prompt` attribute describes the tool invocation. |
+| `shape=parallelogram` | **Tool Node** *(advanced)* | Executes a deterministic shell command (`tool_command`) in the run workspace (`<logsRoot>/workspace`) rather than dispatching an LLM prompt. |
 | `shape=house` | **Stack Manager Loop** *(advanced)* | Manages a loop that delegates sub-tasks to a stack-based manager agent. Useful for iterative or recursive workflow patterns. |
 
 ## Node Attributes
@@ -32,13 +32,15 @@ Attractor projects are defined using the [Graphviz DOT language](https://graphvi
 | `prompt` | string | LLM instruction for this stage. Required for LLM stage nodes. |
 | `shape` | string | Determines node behavior. See Node Types above. |
 | `type` | string | Extended type override. Currently: `"wait.human"` for human review gates. |
+| `llm_provider` | string | Optional provider override per stage (`openai`, `anthropic`, `gemini`, `copilot`, `custom`). |
+| `llm_model` | string | Optional model override per stage. If omitted, Attractor uses the provider default. |
 
 ## Edge Attributes
 
 | Attribute | Type | Description |
 |-----------|------|-------------|
 | `label` | string | Display label shown in the graph view. |
-| `condition` | string | Boolean expression evaluated at a conditional gate. Example: `outcome=success`, `outcome!=success`. |
+| `condition` | string | Boolean expression evaluated at a conditional gate. Supports `=`, `!=`, `contains`, `!contains`, and `&&`. Example: `outcome=success`, `context.last_response contains "approved"`. |
 
 ## Graph Attributes
 

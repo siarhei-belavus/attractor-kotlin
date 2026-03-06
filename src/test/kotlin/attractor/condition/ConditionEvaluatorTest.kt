@@ -105,6 +105,29 @@ class ConditionEvaluatorTest : FunSpec({
         ConditionEvaluator.evaluate("context.loop_state=active", outcome(StageStatus.SUCCESS), c) shouldBe true
     }
 
+    test("contains and !contains operators") {
+        val c = ctx("last_response" to "PLAN_READY next step")
+        ConditionEvaluator.evaluate(
+            "context.last_response contains PLAN_READY",
+            outcome(StageStatus.SUCCESS),
+            c
+        ) shouldBe true
+        ConditionEvaluator.evaluate(
+            "context.last_response !contains CLARIFICATION_NEEDED",
+            outcome(StageStatus.SUCCESS),
+            c
+        ) shouldBe true
+    }
+
+    test("contains supports quoted literals with conjunction") {
+        val c = ctx("text" to "hello world")
+        ConditionEvaluator.evaluate(
+            "context.text contains \"hello\" && context.text !contains \"bye\"",
+            outcome(StageStatus.SUCCESS),
+            c
+        ) shouldBe true
+    }
+
     test("route on success from spec example") {
         ConditionEvaluator.evaluate(
             "outcome=success",

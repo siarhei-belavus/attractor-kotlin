@@ -1006,10 +1006,10 @@ class RestApiRouter(
             "provider_openai_enabled" to "true",
             "provider_gemini_enabled" to "true",
             "provider_copilot_enabled" to "false",
-            "cli_anthropic_command" to "claude --dangerously-skip-permissions -p {prompt}",
-            "cli_openai_command" to "codex --full-auto -p {prompt}",
-            "cli_gemini_command" to "gemini --yolo -p {prompt}",
-            "cli_copilot_command" to "copilot --allow-all-tools -p {prompt}"
+            "cli_anthropic_command" to "claude --dangerously-skip-permissions --model {model} -p {prompt}",
+            "cli_openai_command" to "codex exec --full-auto -m {model} {prompt}",
+            "cli_gemini_command" to "gemini --yolo --model {model} -p {prompt}",
+            "cli_copilot_command" to "copilot --allow-all-tools --model {model} -p {prompt}"
         )
         val sb = StringBuilder("{")
         KNOWN_SETTINGS.forEachIndexed { i, key ->
@@ -1031,10 +1031,10 @@ class RestApiRouter(
         "provider_openai_enabled" to "true",
         "provider_gemini_enabled" to "true",
         "provider_copilot_enabled" to "false",
-        "cli_anthropic_command" to "claude --dangerously-skip-permissions -p {prompt}",
-        "cli_openai_command" to "codex --full-auto -p {prompt}",
-        "cli_gemini_command" to "gemini --yolo -p {prompt}",
-        "cli_copilot_command" to "copilot --allow-all-tools -p {prompt}"
+        "cli_anthropic_command" to "claude --dangerously-skip-permissions --model {model} -p {prompt}",
+        "cli_openai_command" to "codex exec --full-auto -m {model} {prompt}",
+        "cli_gemini_command" to "gemini --yolo --model {model} -p {prompt}",
+        "cli_copilot_command" to "copilot --allow-all-tools --model {model} -p {prompt}"
     )
 
     private fun handleGetSetting(ex: HttpExchange, key: String) {

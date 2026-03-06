@@ -1174,10 +1174,10 @@ class WebMonitorServer(private val requestedPort: Int, private val registry: Pro
                 val gemEnabled  = store.getSetting("provider_gemini_enabled") ?: "false"
                 val copilotEnabled = store.getSetting("provider_copilot_enabled") ?: "false"
                 val customEnabled = store.getSetting("provider_custom_enabled") ?: "false"
-                val anthCmd    = store.getSetting("cli_anthropic_command") ?: "claude --dangerously-skip-permissions -p {prompt}"
-                val oaiCmd     = store.getSetting("cli_openai_command") ?: "codex exec --full-auto {prompt}"
-                val gemCmd     = store.getSetting("cli_gemini_command") ?: "gemini --yolo -p {prompt}"
-                val copilotCmd = store.getSetting("cli_copilot_command") ?: "copilot --allow-all-tools -p {prompt}"
+                val anthCmd    = store.getSetting("cli_anthropic_command") ?: "claude --dangerously-skip-permissions --model {model} -p {prompt}"
+                val oaiCmd     = store.getSetting("cli_openai_command") ?: "codex exec --full-auto -m {model} {prompt}"
+                val gemCmd     = store.getSetting("cli_gemini_command") ?: "gemini --yolo --model {model} -p {prompt}"
+                val copilotCmd = store.getSetting("cli_copilot_command") ?: "copilot --allow-all-tools --model {model} -p {prompt}"
                 val customHost  = store.getSetting("custom_api_host")  ?: "http://localhost"
                 val customPort  = store.getSetting("custom_api_port")  ?: "11434"
                 val customKey   = store.getSetting("custom_api_key")   ?: ""
@@ -1221,10 +1221,10 @@ class WebMonitorServer(private val requestedPort: Int, private val registry: Pro
                     proc.waitFor() == 0
                 } catch (_: Exception) { false }
             }
-            val anthCmd    = store.getSetting("cli_anthropic_command") ?: "claude --dangerously-skip-permissions -p {prompt}"
-            val oaiCmd     = store.getSetting("cli_openai_command") ?: "codex exec --full-auto {prompt}"
-            val gemCmd     = store.getSetting("cli_gemini_command") ?: "gemini --yolo -p {prompt}"
-            val copilotCmd = store.getSetting("cli_copilot_command") ?: "copilot --allow-all-tools -p {prompt}"
+            val anthCmd    = store.getSetting("cli_anthropic_command") ?: "claude --dangerously-skip-permissions --model {model} -p {prompt}"
+            val oaiCmd     = store.getSetting("cli_openai_command") ?: "codex exec --full-auto -m {model} {prompt}"
+            val gemCmd     = store.getSetting("cli_gemini_command") ?: "gemini --yolo --model {model} -p {prompt}"
+            val copilotCmd = store.getSetting("cli_copilot_command") ?: "copilot --allow-all-tools --model {model} -p {prompt}"
             val body = """{
                 "anthropic":${detectBinary(anthCmd)},
                 "openai":${detectBinary(oaiCmd)},
@@ -2111,7 +2111,7 @@ input:checked + .toggle-slider:before { transform:translateX(20px); }
     <!-- Providers -->
     <div style="padding: 12px 0 4px 0;">
       <div class="setting-label" style="margin-bottom:8px;">Providers</div>
-      <div class="setting-desc" style="margin-bottom:12px;">Enable or disable individual AI providers.<span id="cliPromptHint" style="display:none;"> CLI command templates support <code>{prompt}</code> substitution.</span></div>
+      <div class="setting-desc" style="margin-bottom:12px;">Enable or disable individual AI providers.<span id="cliPromptHint" style="display:none;"> CLI command templates support <code>{prompt}</code> and <code>{model}</code> substitution.</span></div>
       <div id="apiKeyRestartNote" style="display:none; padding:8px 12px; border-radius:7px; background:var(--surface-muted); border:1px solid var(--border); color:var(--text-muted); font-size:0.8rem; margin-bottom:12px;">&#8505;&#65039; API keys are read from environment variables at startup. Restart the application after setting a key for it to be detected.</div>
 
       <!-- Anthropic -->
@@ -2127,7 +2127,7 @@ input:checked + .toggle-slider:before { transform:translateX(20px); }
           <span id="apiBadgeAnthropic" style="font-size:0.78rem; display:none;"></span>
           <span id="cliBadgeAnthropic" style="font-size:0.78rem; display:none;"></span>
         </div>
-        <input id="cliCmdAnthropic" type="text" placeholder="claude --dangerously-skip-permissions -p {prompt}"
+        <input id="cliCmdAnthropic" type="text" placeholder="claude --dangerously-skip-permissions --model {model} -p {prompt}"
           style="display:none; width:100%; box-sizing:border-box; padding:6px 10px; border:1px solid var(--border); border-radius:6px; background:var(--surface-muted); color:var(--text); font-size:0.85rem; font-family:monospace;"
           onblur="saveSetting('cli_anthropic_command', this.value)">
       </div>
@@ -2145,7 +2145,7 @@ input:checked + .toggle-slider:before { transform:translateX(20px); }
           <span id="apiBadgeOpenAI" style="font-size:0.78rem; display:none;"></span>
           <span id="cliBadgeOpenAI" style="font-size:0.78rem; display:none;"></span>
         </div>
-        <input id="cliCmdOpenAI" type="text" placeholder="codex exec --full-auto {prompt}"
+        <input id="cliCmdOpenAI" type="text" placeholder="codex exec --full-auto -m {model} {prompt}"
           style="display:none; width:100%; box-sizing:border-box; padding:6px 10px; border:1px solid var(--border); border-radius:6px; background:var(--surface-muted); color:var(--text); font-size:0.85rem; font-family:monospace;"
           onblur="saveSetting('cli_openai_command', this.value)">
       </div>
@@ -2163,7 +2163,7 @@ input:checked + .toggle-slider:before { transform:translateX(20px); }
           <span id="apiBadgeGemini" style="font-size:0.78rem; display:none;"></span>
           <span id="cliBadgeGemini" style="font-size:0.78rem; display:none;"></span>
         </div>
-        <input id="cliCmdGemini" type="text" placeholder="gemini --yolo -p {prompt}"
+        <input id="cliCmdGemini" type="text" placeholder="gemini --yolo --model {model} -p {prompt}"
           style="display:none; width:100%; box-sizing:border-box; padding:6px 10px; border:1px solid var(--border); border-radius:6px; background:var(--surface-muted); color:var(--text); font-size:0.85rem; font-family:monospace;"
           onblur="saveSetting('cli_gemini_command', this.value)">
       </div>
@@ -2225,7 +2225,7 @@ input:checked + .toggle-slider:before { transform:translateX(20px); }
           </div>
           <span id="cliBadgeCopilot" style="font-size:0.78rem; display:none;"></span>
         </div>
-        <input id="cliCmdCopilot" type="text" placeholder="copilot --allow-all-tools -p {prompt}"
+        <input id="cliCmdCopilot" type="text" placeholder="copilot --allow-all-tools --model {model} -p {prompt}"
           style="display:none; width:100%; box-sizing:border-box; padding:6px 10px; border:1px solid var(--border); border-radius:6px; background:var(--surface-muted); color:var(--text); font-size:0.85rem; font-family:monospace;"
           onblur="saveSetting('cli_copilot_command', this.value)">
       </div>
@@ -3586,13 +3586,13 @@ function loadSettings() {
       var customModel = document.getElementById('customApiModel');
       if (customModel) customModel.value = s.custom_api_model || 'llama3.2';
       var anthCmd = document.getElementById('cliCmdAnthropic');
-      if (anthCmd) anthCmd.value = s.cli_anthropic_command || 'claude --dangerously-skip-permissions -p {prompt}';
+      if (anthCmd) anthCmd.value = s.cli_anthropic_command || 'claude --dangerously-skip-permissions --model {model} -p {prompt}';
       var oaiCmd = document.getElementById('cliCmdOpenAI');
-      if (oaiCmd) oaiCmd.value = s.cli_openai_command || 'codex exec --full-auto {prompt}';
+      if (oaiCmd) oaiCmd.value = s.cli_openai_command || 'codex exec --full-auto -m {model} {prompt}';
       var gemCmd = document.getElementById('cliCmdGemini');
-      if (gemCmd) gemCmd.value = s.cli_gemini_command || 'gemini --yolo -p {prompt}';
+      if (gemCmd) gemCmd.value = s.cli_gemini_command || 'gemini --yolo --model {model} -p {prompt}';
       var copilotCmd = document.getElementById('cliCmdCopilot');
-      if (copilotCmd) copilotCmd.value = s.cli_copilot_command || 'copilot --allow-all-tools -p {prompt}';
+      if (copilotCmd) copilotCmd.value = s.cli_copilot_command || 'copilot --allow-all-tools --model {model} -p {prompt}';
       var mode = s.execution_mode || 'api';
       applyExecutionModeUi(mode);
       updateAgentWarning();

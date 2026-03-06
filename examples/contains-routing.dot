@@ -1,0 +1,18 @@
+digraph ContainsRouting {
+  graph [goal="Route by keywords in previous response", label="Contains Routing Example"]
+
+  start  [shape=Mdiamond, label="Start"]
+  ask    [shape=box, label="Ask", prompt="Decide route. Reply with PLAN_READY or CLARIFICATION_NEEDED."]
+  gate   [shape=diamond, label="Route"]
+  ready  [shape=box, label="Ready path", prompt="Proceed with implementation."]
+  clarify [shape=box, label="Ask clarification", prompt="Ask focused clarification questions."]
+  done   [shape=Msquare, label="Done"]
+
+  start -> ask
+  ask -> gate
+  gate -> ready   [label="ready", condition="context.last_response contains PLAN_READY"]
+  gate -> clarify [label="clarify", condition="context.last_response contains CLARIFICATION_NEEDED"]
+  gate -> clarify [label="fallback", condition="context.last_response !contains PLAN_READY"]
+  ready -> done
+  clarify -> done
+}

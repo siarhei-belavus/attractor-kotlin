@@ -137,21 +137,19 @@ object ExitNoOutgoingRule : LintRule {
 
 object ConditionSyntaxRule : LintRule {
     override val name = "condition_syntax"
+    private val clausePattern = Regex("^([a-zA-Z0-9_.]+)(\\s*(=|!=|contains|!contains)\\s*.+)?$")
+
     override fun apply(graph: DotGraph): List<Diagnostic> {
         return graph.edges.flatMap { edge ->
             val cond = edge.condition
             if (cond.isBlank()) return@flatMap emptyList()
             val errors = mutableListOf<Diagnostic>()
-            // Basic validation: split on && and check each clause has an operator
             val clauses = cond.split("&&").map { it.trim() }.filter { it.isNotBlank() }
             for (clause in clauses) {
-                if (!clause.contains("=") && !clause.contains("!=")) {
-                    // Bare key - check it's a valid identifier-like key
-                    if (!clause.matches(Regex("[a-zA-Z0-9_.]+( *(=|!=) *.*)?"))) {
-                        errors.add(Diagnostic(name, Severity.ERROR,
-                            "Invalid condition clause: '$clause' in edge ${edge.from}->${edge.to}",
-                            edge = Pair(edge.from, edge.to)))
-                    }
+                if (!clause.matches(clausePattern)) {
+                    errors.add(Diagnostic(name, Severity.ERROR,
+                        "Invalid condition clause: '$clause' in edge ${edge.from}->${edge.to}",
+                        edge = Pair(edge.from, edge.to)))
                 }
             }
             errors

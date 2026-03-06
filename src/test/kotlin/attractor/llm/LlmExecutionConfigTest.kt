@@ -28,9 +28,9 @@ class LlmExecutionConfigTest : FunSpec({
         cfg.providerToggles.openai shouldBe false
         cfg.providerToggles.gemini shouldBe false
         cfg.providerToggles.custom shouldBe false
-        cfg.cliCommands.anthropic shouldBe "claude --dangerously-skip-permissions -p {prompt}"
-        cfg.cliCommands.openai shouldBe "codex exec --full-auto {prompt}"
-        cfg.cliCommands.gemini shouldBe "gemini --yolo -p {prompt}"
+        cfg.cliCommands.anthropic shouldBe "claude --dangerously-skip-permissions --model {model} -p {prompt}"
+        cfg.cliCommands.openai shouldBe "codex exec --full-auto -m {model} {prompt}"
+        cfg.cliCommands.gemini shouldBe "gemini --yolo --model {model} -p {prompt}"
         cfg.customApiConfig.host shouldBe "http://localhost"
         cfg.customApiConfig.port shouldBe "11434"
         cfg.customApiConfig.model shouldBe "llama3.2"

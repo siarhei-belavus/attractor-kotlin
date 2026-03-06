@@ -13,12 +13,18 @@ PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 LIBS_DIR="$PROJECT_ROOT/build/libs"
 
 # Find the most recently built CLI JAR (devel or release)
-JAR=$(ls -t "$LIBS_DIR"/coreys-attractor-cli-*.jar 2>/dev/null | head -1)
+JAR=$(ls -t "$LIBS_DIR"/attractor-cli-*.jar 2>/dev/null | head -1)
 
 if [ -z "$JAR" ]; then
-    echo "Error: coreys-attractor-cli JAR not found in $LIBS_DIR" >&2
+    echo "Error: attractor-cli JAR not found in $LIBS_DIR" >&2
     echo "Run 'make cli-jar' from the project root to build it." >&2
     exit 1
 fi
 
-exec java -jar "$JAR" "$@"
+if [ -z "${JAVA_HOME:-}" ]; then
+    if [ -d "/opt/homebrew/opt/openjdk@25/libexec/openjdk.jdk/Contents/Home" ]; then
+        export JAVA_HOME="/opt/homebrew/opt/openjdk@25/libexec/openjdk.jdk/Contents/Home"
+    fi
+fi
+
+exec "${JAVA_HOME:+$JAVA_HOME/bin/}java" -jar "$JAR" "$@"

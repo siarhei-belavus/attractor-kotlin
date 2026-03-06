@@ -7,11 +7,11 @@ import java.util.UUID
 /**
  * Google Gemini CLI-backed ProviderAdapter.
  * Invokes the `gemini` CLI binary (or a custom command template) via ProcessBuilder.
- * The command template must contain `{prompt}` which is substituted with the full prompt text.
- * Example template: "gemini --yolo -p {prompt}"
+ * The command template supports `{prompt}` and `{model}` substitution.
+ * Example template: "gemini --yolo --model {model} -p {prompt}"
  */
 class GeminiCliAdapter(
-    private val commandTemplate: String = "gemini --yolo -p {prompt}",
+    private val commandTemplate: String = "gemini --yolo --model {model} -p {prompt}",
     private val runner: ProcessRunner = DefaultProcessRunner
 ) : ProviderAdapter {
 

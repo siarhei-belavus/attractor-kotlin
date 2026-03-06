@@ -201,7 +201,7 @@ ollama pull llama3.2
 | Google Gemini | `gemini` | [Gemini CLI](https://github.com/google-gemini/gemini-cli) |
 | GitHub Copilot | `gh copilot` | `gh extension install github/gh-copilot` |
 
-CLI mode does not require environment variable API keys — authentication is handled by the installed tool. Command templates are configurable per provider in Settings and support `{prompt}` substitution.
+CLI mode does not require environment variable API keys — authentication is handled by the installed tool. Command templates are configurable per provider in Settings and support `{prompt}` and `{model}` substitution. In CLI mode, the OpenAI default model is `gpt-5.3-codex`.
 
 ### System tool warnings
 
@@ -277,14 +277,19 @@ Pipelines are written in Graphviz DOT. Attractor interprets node shapes and attr
 | `shape=box` (default) | LLM prompt node — `prompt=` attribute is sent to the configured model |
 | `shape=diamond` | Conditional gate — evaluates outgoing edge `condition=` attributes |
 | `shape=hexagon` or `type="wait.human"` | Human review gate — pauses for interactive input |
+| `shape=parallelogram` | Tool node — runs `tool_command=` in the run workspace (`<logsRoot>/workspace`) |
 | Parallel / fan-out nodes | Multiple outgoing edges from a single node run concurrently |
+
+LLM stages also support per-node overrides:
+- `llm_provider=` (`openai`, `anthropic`, `gemini`, `copilot`, `custom`)
+- `llm_model=` (provider model id)
 
 ### Edge attributes
 
 | Attribute | Description |
 |-----------|-------------|
 | `label` | Display label shown in the dashboard |
-| `condition` | Boolean expression evaluated against the upstream node's outcome (e.g. `outcome=success`, `outcome!=success`) |
+| `condition` | Boolean expression evaluated against the upstream node's outcome (supports `=`, `!=`, `contains`, `!contains`, `&&`) |
 
 ### Graph attributes
 

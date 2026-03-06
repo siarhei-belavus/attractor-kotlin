@@ -209,4 +209,22 @@ class ValidatorTest : FunSpec({
         """.trimIndent()
         errors(dot).filter { it.rule == "reachability" }.shouldBeEmpty()
     }
+
+    test("condition syntax accepts contains and !contains operators") {
+        val dot = """
+            digraph ContainsSyntax {
+                start [shape=Mdiamond]
+                gate  [shape=diamond]
+                yes   [shape=box]
+                no    [shape=box]
+                exit  [shape=Msquare]
+                start -> gate
+                gate -> yes [condition="context.last_response contains PLAN_READY"]
+                gate -> no  [condition="context.last_response !contains CLARIFICATION_NEEDED"]
+                yes -> exit
+                no -> exit
+            }
+        """.trimIndent()
+        errors(dot).filter { it.rule == "condition_syntax" }.shouldBeEmpty()
+    }
 })

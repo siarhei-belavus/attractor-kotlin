@@ -70,10 +70,10 @@ data class LlmExecutionConfig(
                                     ?: env["ATTRACTOR_CUSTOM_API_ENABLED"], default = false)
                 ),
                 cliCommands = CliCommands(
-                    anthropic = db("cli_anthropic_command") ?: "claude --dangerously-skip-permissions -p {prompt}",
-                    openai    = db("cli_openai_command")    ?: "codex exec --full-auto {prompt}",
-                    gemini    = db("cli_gemini_command")    ?: "gemini --yolo -p {prompt}",
-                    copilot   = db("cli_copilot_command")   ?: "copilot --allow-all-tools -p {prompt}"
+                    anthropic = db("cli_anthropic_command") ?: "claude --dangerously-skip-permissions --model {model} -p {prompt}",
+                    openai    = db("cli_openai_command")    ?: "codex exec --full-auto -m {model} {prompt}",
+                    gemini    = db("cli_gemini_command")    ?: "gemini --yolo --model {model} -p {prompt}",
+                    copilot   = db("cli_copilot_command")   ?: "copilot --allow-all-tools --model {model} -p {prompt}"
                 ),
                 customApiConfig = CustomApiConfig(
                     host   = db("custom_api_host")  ?: env["ATTRACTOR_CUSTOM_API_HOST"]  ?: "http://localhost",

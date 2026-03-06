@@ -92,7 +92,7 @@ tasks.register<Jar>("cliJar") {
     archiveBaseName.set("attractor-cli-devel")
     archiveVersion.set("")
     manifest {
-        attributes["Main-Class"] = "attractor.cli.CliMainKt"
+        attributes["Main-Class"] = "attractor.cli.MainKt"
         attributes["Implementation-Version"] = version
     }
     from(configurations.runtimeClasspath.get().map { if (it.isDirectory) it else zipTree(it) })
@@ -116,7 +116,7 @@ tasks.register<Jar>("releaseCliJar") {
     archiveBaseName.set("attractor-cli")
     archiveVersion.set(version.toString())
     manifest {
-        attributes["Main-Class"] = "attractor.cli.CliMainKt"
+        attributes["Main-Class"] = "attractor.cli.MainKt"
         attributes["Implementation-Version"] = version
     }
     from(configurations.runtimeClasspath.get().map { if (it.isDirectory) it else zipTree(it) })

@@ -48,7 +48,7 @@ class NullFailureDiagnoser(private val reason: String = "no LLM diagnoser config
 
 class LlmFailureDiagnoser(
     private val client: Client,
-    private val model: String = LlmCodergenBackend.DEFAULT_MODEL
+    private val model: String = LlmCodergenBackend.defaultModelFor(client.defaultProviderName())
 ) : FailureDiagnoser {
 
     companion object {

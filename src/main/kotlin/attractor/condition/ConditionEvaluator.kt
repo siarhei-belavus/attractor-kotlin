@@ -10,7 +10,7 @@ import attractor.state.Outcome
  *   ConditionExpr ::= Clause ( '&&' Clause )*
  *   Clause        ::= Key Operator Literal
  *   Key           ::= 'outcome' | 'preferred_label' | 'context.' Path
- *   Operator      ::= '=' | '!='
+ *   Operator      ::= '=' | '!=' | 'contains' | '!contains'
  *   Literal       ::= String | Integer | Boolean
  */
 object ConditionEvaluator {
@@ -43,6 +43,18 @@ object ConditionEvaluator {
 
     private fun evaluateClause(clause: String, outcome: Outcome, context: Context): Boolean {
         return when {
+            clause.contains("!contains") -> {
+                val idx = clause.indexOf("!contains")
+                val key = clause.substring(0, idx).trim()
+                val value = clause.substring(idx + "!contains".length).trim().unquote()
+                !resolveKey(key, outcome, context).contains(value)
+            }
+            clause.contains("contains") -> {
+                val idx = clause.indexOf("contains")
+                val key = clause.substring(0, idx).trim()
+                val value = clause.substring(idx + "contains".length).trim().unquote()
+                resolveKey(key, outcome, context).contains(value)
+            }
             clause.contains("!=") -> {
                 val idx = clause.indexOf("!=")
                 val key = clause.substring(0, idx).trim()

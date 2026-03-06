@@ -185,6 +185,28 @@ class EngineTest : FunSpec({
         outcome.status shouldBe StageStatus.SUCCESS
     }
 
+    test("tool handler runs command in run workspace directory") {
+        val logsRoot = "/tmp/attractor-tool-workspace-${System.currentTimeMillis()}"
+        val dot = """
+            digraph ToolWorkspace {
+                start [shape=Mdiamond]
+                exit  [shape=Msquare]
+                pwd_node [shape=parallelogram, label="Pwd", tool_command="pwd > cwd.txt"]
+                start -> pwd_node -> exit
+            }
+        """.trimIndent()
+
+        val engine = makeEngine(logsRoot = logsRoot)
+        val graph = Parser.parse(dot)
+        val prepared = engine.prepare(graph)
+        val outcome = engine.run(prepared)
+
+        outcome.status shouldBe StageStatus.SUCCESS
+        val cwdFile = java.io.File("$logsRoot/workspace/cwd.txt")
+        cwdFile.exists() shouldBe true
+        cwdFile.readText().trim() shouldBe java.io.File("$logsRoot/workspace").canonicalPath
+    }
+
     test("goal gate enforcement redirects when unsatisfied") {
         // Build a graph where the goal gate node always fails
         // and there's a retry target

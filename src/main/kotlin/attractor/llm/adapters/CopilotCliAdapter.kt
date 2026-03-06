@@ -7,11 +7,11 @@ import java.util.UUID
 /**
  * GitHub Copilot CLI-backed ProviderAdapter.
  * Invokes the `gh copilot suggest` CLI (or a custom command template) via ProcessBuilder.
- * The command template must contain `{prompt}` which is substituted with the full prompt text.
- * Example template: "copilot --allow-all-tools -p {prompt}"
+ * The command template supports `{prompt}` and `{model}` substitution.
+ * Example template: "copilot --allow-all-tools --model {model} -p {prompt}"
  */
 class CopilotCliAdapter(
-    private val commandTemplate: String = "copilot --allow-all-tools -p {prompt}",
+    private val commandTemplate: String = "copilot --allow-all-tools --model {model} -p {prompt}",
     private val runner: ProcessRunner = DefaultProcessRunner
 ) : ProviderAdapter {
 

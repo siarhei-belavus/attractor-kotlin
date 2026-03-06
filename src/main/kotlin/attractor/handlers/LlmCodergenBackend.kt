@@ -23,11 +23,19 @@ class LlmCodergenBackend(private val client: Client) : CodergenBackend {
         private const val COMMAND_TIMEOUT_SEC = 120L
         private const val MAX_OUTPUT_CHARS = 20_000
         private val TIME_FMT = DateTimeFormatter.ofPattern("HH:mm:ss")
+
+        fun defaultModelFor(provider: String?): String = when (provider?.lowercase()) {
+            "openai" -> "gpt-5.3-codex"
+            "gemini" -> "gemini-3-flash-preview"
+            "copilot" -> "copilot"
+            "custom" -> "llama3.2"
+            else -> DEFAULT_MODEL
+        }
     }
 
     override fun run(node: DotNode, prompt: String, context: Context, workspaceDir: File, stageDir: File): Any {
-        val model = node.llmModel.ifEmpty { DEFAULT_MODEL }
-        val provider = node.llmProvider.ifEmpty { null }
+        val provider = node.llmProvider.ifEmpty { client.defaultProviderName() }
+        val model = node.llmModel.ifEmpty { defaultModelFor(provider) }
         val reasoningEffort = node.reasoningEffort.ifEmpty { null }
         // Per-node override: max_tool_rounds=N in the .dot file
         val maxToolRounds = node.attrLong("max_tool_rounds", MAX_TOOL_ROUNDS.toLong()).toInt()

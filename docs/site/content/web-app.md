@@ -250,7 +250,7 @@ These environment variables seed the Custom provider's Settings UI on first star
 
 ### CLI command templates
 
-In CLI mode, each provider has an editable command template. Use `{prompt}` as the substitution placeholder for the generated prompt text.
+In CLI mode, each provider has an editable command template. Use `{prompt}` and `{model}` as substitution placeholders for the generated prompt text and effective model. In CLI mode, OpenAI defaults to `gpt-5.3-codex`.
 
 ### System Tools
 

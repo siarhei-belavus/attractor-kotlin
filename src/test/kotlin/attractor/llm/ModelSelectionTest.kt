@@ -89,8 +89,9 @@ class ModelSelectionTest : FunSpec({
     test("CLI mode: anthropic disabled, openai selected") {
         val env = emptyMap<String, String>()
         val cfg = config(mode = ExecutionMode.CLI, anthropic = false)
-        val (provider, _) = ModelSelection.selectModel(cfg, env)
+        val (provider, model) = ModelSelection.selectModel(cfg, env)
         provider shouldBe "openai"
+        model shouldBe "gpt-5.3-codex"
     }
 
     test("CLI mode: only gemini enabled") {

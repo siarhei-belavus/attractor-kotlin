@@ -23,7 +23,7 @@ object ModelSelection {
                     val key = env["ATTRACTOR_OPENAI_API_KEY"] ?: ""
                     if (key.isNotBlank()) return "openai" to "gpt-5.2-mini"
                 }
-                ExecutionMode.CLI -> return "openai" to "gpt-5.2-mini"
+                ExecutionMode.CLI -> return "openai" to "gpt-5.3-codex"
             }
         }
 

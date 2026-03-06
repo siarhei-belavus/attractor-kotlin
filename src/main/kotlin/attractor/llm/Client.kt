@@ -46,6 +46,8 @@ class Client(
         providers.values.forEach { it.close() }
     }
 
+    fun defaultProviderName(): String? = effectiveDefault
+
     companion object {
         /**
          * Create a client from environment variables.

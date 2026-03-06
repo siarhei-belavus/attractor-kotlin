@@ -5,6 +5,7 @@ import attractor.dot.DotNode
 import attractor.state.Context
 import attractor.state.Outcome
 import java.io.BufferedReader
+import java.io.File
 import java.io.InputStreamReader
 import java.util.concurrent.TimeUnit
 
@@ -17,9 +18,12 @@ object ToolHandler : Handler {
 
         val timeoutMs = node.timeoutMillis.coerceAtLeast(0L)
         val timeoutSec = if (timeoutMs > 0) timeoutMs / 1000 else 60L
+        val workspaceDir = File(logsRoot, "workspace")
+        workspaceDir.mkdirs()
 
         return try {
             val process = ProcessBuilder("/bin/sh", "-c", command)
+                .directory(workspaceDir)
                 .redirectErrorStream(true)
                 .start()
 

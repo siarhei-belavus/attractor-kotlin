@@ -1,0 +1,48 @@
+digraph DeltaPlanDev {
+  graph [
+    goal="Develop and iterate on siarhei-belavus/deltaplan in isolated run workspace",
+    label="DeltaPlan Development Flow"
+  ]
+
+  start [shape=Mdiamond, label="Start"]
+
+  bootstrap [
+    shape=parallelogram,
+    label="Bootstrap Repo",
+    timeout="180s",
+    tool_command="set -eu\nREPO_URL=\"https://github.com/siarhei-belavus/deltaplan\"\nBRANCH=\"${DELTAPLAN_BRANCH:-main}\"\nfind . -mindepth 1 -maxdepth 1 -exec rm -rf {} +\ngit clone --branch \"$BRANCH\" --single-branch \"$REPO_URL\" .\necho \"BOOTSTRAP_OK\"\necho \"REPO=$REPO_URL\"\necho \"BRANCH=$BRANCH\"\ngit rev-parse --abbrev-ref HEAD\ngit status --short\nls -1 | head -n 40"
+  ]
+
+  plan [
+    shape=box,
+    label="Plan Changes",
+    prompt="Bootstrap output:\n$tool.output\n\nBased on current repository state, create a concrete implementation plan for the requested change.\nUse numbered steps and include exact files likely to be edited.\nIf requirements are unclear, write CLARIFICATION_NEEDED with specific questions.\nOtherwise finish with PLAN_READY."
+  ]
+
+  gate [
+    shape=diamond,
+    label="Plan Ready?"
+  ]
+
+  implement [
+    shape=box,
+    label="Implement",
+    prompt="Execute the approved plan in this workspace.\nMake minimal focused edits.\nRun relevant checks/tests for changed areas.\nProvide summary with file paths and finish with IMPLEMENTATION_DONE."
+  ]
+
+  review [
+    shape=hexagon,
+    type="wait.human",
+    label="Human Review"
+  ]
+
+  done [shape=Msquare, label="Done"]
+
+  start -> bootstrap
+  bootstrap -> plan
+  plan -> gate
+  gate -> implement [label="ready", condition="context.last_response contains PLAN_READY"]
+  gate -> review [label="questions", condition="context.last_response contains CLARIFICATION_NEEDED"]
+  implement -> review
+  review -> done
+}

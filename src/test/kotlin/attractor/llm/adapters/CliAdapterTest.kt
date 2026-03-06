@@ -77,6 +77,12 @@ class CliAdapterTest : FunSpec({
         args[2] shouldContain "user message"
     }
 
+    test("buildArgs substitutes {model} token") {
+        val req = makeRequest("hello world")
+        val args = buildArgs("codex exec -m {model} {prompt}", req)
+        args shouldBe listOf("codex", "exec", "-m", "test-model", "hello world")
+    }
+
     // ── stream: success ───────────────────────────────────────────────────────
 
     test("AnthropicCliAdapter stream emits TEXT_DELTA events") {
