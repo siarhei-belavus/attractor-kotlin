@@ -1,0 +1,92 @@
+{{ define "main" }}
+<article>
+  <h1>Search</h1>
+
+  <div class="search-container">
+    <label for="search-input" class="sr-only">Search documentation</label>
+    <input
+      type="text"
+      id="search-input"
+      class="search-input"
+      placeholder="Search documentation..."
+      autofocus
+    />
+  </div>
+
+  <div id="search-results" role="status" aria-live="polite" aria-atomic="true">
+    <p class="search-message">Enter a search query to find results.</p>
+  </div>
+</article>
+
+<script type="module">
+  let pagefind;
+  try {
+    pagefind = await import("/pagefind/pagefind.js");
+  } catch (e) {
+    document.getElementById("search-results").innerHTML =
+      '<p class="search-message search-message--error">Search index not available. Build the site with Pagefind to enable search.</p>';
+  }
+
+  async function performSearch(query) {
+    const resultsEl = document.getElementById("search-results");
+
+    if (!query || query.trim().length === 0) {
+      resultsEl.innerHTML = '<p class="search-message">Enter a search query to find results.</p>';
+      return;
+    }
+
+    if (!pagefind) return;
+
+    resultsEl.innerHTML = '<p class="search-message">Searching&hellip;</p>';
+
+    try {
+      const search = await pagefind.search(query);
+      const results = await Promise.all(search.results.map(r => r.data()));
+      displayResults(results);
+    } catch (err) {
+      resultsEl.innerHTML = '<p class="search-message search-message--error">Search failed. Please try again.</p>';
+    }
+  }
+
+  function displayResults(results) {
+    const resultsEl = document.getElementById("search-results");
+
+    if (results.length === 0) {
+      resultsEl.innerHTML = '<p class="search-message">No results found.</p>';
+      return;
+    }
+
+    const html = results.map(result => `
+      <a href="${result.url}" class="search-result">
+        <div class="search-result-title">${result.meta.title || "Untitled"}</div>
+        <div class="search-result-excerpt">${result.excerpt}</div>
+      </a>
+    `).join("");
+
+    resultsEl.innerHTML = html;
+  }
+
+  let debounceTimer;
+  const input = document.getElementById("search-input");
+
+  // Initialise from URL param
+  const params = new URLSearchParams(window.location.search);
+  const initial = params.get("q") || "";
+  if (initial) {
+    input.value = initial;
+    performSearch(initial);
+  }
+
+  input.addEventListener("input", e => {
+    const query = e.target.value;
+
+    // Keep URL in sync
+    const url = new URL(window.location);
+    query ? url.searchParams.set("q", query) : url.searchParams.delete("q");
+    window.history.replaceState({}, "", url);
+
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(() => performSearch(query), 300);
+  });
+</script>
+{{ end }}

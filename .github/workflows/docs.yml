@@ -4,11 +4,11 @@ on:
   push:
     branches: [main]
     paths:
-      - 'docs-site/**'
+      - 'docs/site/**'
   pull_request:
     branches: [main]
     paths:
-      - 'docs-site/**'
+      - 'docs/site/**'
   workflow_dispatch:
 
 permissions:
@@ -28,6 +28,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Pagefind
+        run: npm install -g pagefind
+
       - name: Setup Hugo
         uses: peaceiris/actions-hugo@v3
         with:
@@ -35,7 +43,10 @@ jobs:
           extended: true
 
       - name: Build
-        run: hugo --minify --source docs-site
+        run: hugo --minify --source docs/site
+
+      - name: Index with Pagefind
+        run: npx pagefind --site docs/site/public
 
       - name: Upload Pages artifact
         if: |
@@ -43,7 +54,7 @@ jobs:
           github.event_name == 'workflow_dispatch'
         uses: actions/upload-pages-artifact@v3
         with:
-          path: docs-site/public
+          path: docs/site/public
 
   deploy:
     name: Deploy to GitHub Pages

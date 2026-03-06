@@ -1,0 +1,9 @@
+name = "Attractor"
+license = "MIT"
+licenselink = "https://github.com/coreydaley/attractor/blob/main/LICENSE"
+description = "Custom Hugo theme matching the Attractor web application design"
+homepage = "https://github.com/coreydaley/attractor"
+min_version = "0.110.0"
+
+[author]
+  name = "Corey Daley"

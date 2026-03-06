@@ -1,0 +1,11 @@
+<nav id="siteNav" class="site-nav">
+  <ul>
+    {{- range .Site.RegularPages.ByWeight }}
+    <li>
+      <a href="{{ .RelPermalink }}"{{ if eq .RelPermalink $.RelPermalink }} class="nav-active"{{ end }}>
+        {{ .Title }}
+      </a>
+    </li>
+    {{- end }}
+  </ul>
+</nav>

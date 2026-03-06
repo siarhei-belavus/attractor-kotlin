@@ -1,0 +1,9 @@
+<header>
+  <button id="navToggle" class="nav-toggle" aria-label="Toggle navigation">&#9776;</button>
+  <a href="{{ "/" | relURL }}" class="site-brand">
+    <img src="{{ "favicon.svg" | relURL }}" width="24" height="24" alt="Attractor">
+    <span class="site-title">{{ .Site.Title }}</span>
+  </a>
+  <a href="{{ "/search/" | relURL }}" class="search-link" title="Search" aria-label="Search">&#128269;</a>
+  <button id="themeToggle" class="theme-toggle" onclick="toggleTheme()" title="Toggle dark/light mode" aria-label="Toggle theme">&#9728;</button>
+</header>

@@ -1,0 +1,11 @@
+{{ define "main" }}
+<article>
+  <h1>{{ .Title }}</h1>
+  {{ .Content }}
+  {{- with .Site.Params.editPath }}
+  <div class="edit-link">
+    <a href="{{ . }}/{{ $.File.Path }}" target="_blank" rel="noopener">Edit this page on GitHub &#8599;</a>
+  </div>
+  {{- end }}
+</article>
+{{ end }}

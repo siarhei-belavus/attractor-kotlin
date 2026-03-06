@@ -1,0 +1,14 @@
+baseURL = "https://attractor.coreydaley.dev"
+title = "Attractor Docs"
+theme = "attractor"
+pluralizeListTitles = false
+
+[markup.highlight]
+  noClasses = false
+
+[params]
+  editPath = "https://github.com/coreydaley/attractor/edit/main/docs/site/content"
+
+[minify]
+  [minify.tdewolff.json]
+    precision = 0
