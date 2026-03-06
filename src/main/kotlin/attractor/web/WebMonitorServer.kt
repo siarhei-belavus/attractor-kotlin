@@ -2102,7 +2102,7 @@ input:checked + .toggle-slider:before { transform:translateX(20px); }
           <span style="font-size:1.3rem; line-height:1.2; color:#d97706;">&#9432;&#65039;</span>
           <div>
             <div style="font-weight:700; color:#d97706; margin-bottom:4px;">CLI subprocess mode is not supported in Docker</div>
-            <div style="color:var(--text); font-size:0.8rem; line-height:1.6;">The AI CLI tools (<code>claude</code>, <code>codex</code>, <code>gemini</code>, <code>gh copilot</code>) are not installed in the container and their authentication state is not available. Use <strong>Direct API</strong> mode instead, or see the <a href="https://attractor.coreydaley.dev/docker/" target="_blank" rel="noopener noreferrer" style="color:#d97706;">Docker documentation</a> for workarounds.</div>
+            <div style="color:var(--text); font-size:0.8rem; line-height:1.6;">The AI CLI tools (<code>claude</code>, <code>codex</code>, <code>gemini</code>, <code>gh copilot</code>) are not installed in the container and their authentication state is not available. Use <strong>Direct API</strong> mode instead.</div>
           </div>
         </div>
       </div>
