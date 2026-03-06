@@ -1,0 +1,37 @@
+digraph WorkspaceGithubSmoke {
+  graph [
+    goal="Clone GitHub repos into run workspace and execute LLM prompt from file",
+    label="Workspace GitHub Smoke"
+  ]
+
+  start [shape=Mdiamond, label="Start"]
+
+  bootstrap [
+    shape=parallelogram,
+    label="Clone Repositories",
+    timeout="240s",
+    tool_command="set -eu\nPWD_NOW=\"$(pwd)\"\necho \"$PWD_NOW\"\ncase \"$PWD_NOW\" in\n  */projects/*/workspace) ;;\n  *)\n    echo \"Refusing to run outside run workspace: $PWD_NOW\" >&2\n    exit 97\n    ;;\nesac\nREPO_URL=\"${GITHUB_REPO:-https://github.com/siarhei-belavus/deltaplan}\"\nBRANCH=\"${GITHUB_BRANCH:-main}\"\nfind . -mindepth 1 -maxdepth 1 -exec rm -rf {} +\ngit clone --depth 1 --branch \"$BRANCH\" \"$REPO_URL\" .\necho \"BOOTSTRAP_OK\"\nls -la\nfind . -maxdepth 2 -type d | sort"
+  ]
+
+  ensure_prompt [
+    shape=parallelogram,
+    label="Ensure Prompt File",
+    timeout="60s",
+    tool_command="set -eu\nmkdir -p .codex/prompts\ncat > .codex/prompts/plan.md <<'PROMPT'\nYou are in Attractor run workspace.\n\nCreate a short technical plan (5 bullets max):\n1) confirm repository root and stack,\n2) list one build/test command,\n3) list one safe first code change.\nPROMPT\nls -la .codex/prompts"
+  ]
+
+  inspect [
+    shape=box,
+    label="Inspect Workspace",
+    llm_provider="openai",
+    llm_model="gpt-5.3-codex",
+    prompt="@.codex/prompts/plan.md"
+  ]
+
+  done [shape=Msquare, label="Done"]
+
+  start -> bootstrap
+  bootstrap -> ensure_prompt
+  ensure_prompt -> inspect
+  inspect -> done
+}

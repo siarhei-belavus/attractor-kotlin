@@ -36,9 +36,16 @@ class CodergenHandler(val backend: CodergenBackend? = null) : Handler {
         val workspaceDir = File(logsRoot, "workspace")
         workspaceDir.mkdirs()
 
-        // 2. Build prompt with variable expansion
-        var prompt = node.prompt.ifEmpty { node.label }
-        prompt = expandVariables(prompt, graph, context, workspaceDir)
+        // 2. Build prompt with optional @file resolution and variable expansion
+        val prompt: String = try {
+            val rawPrompt = node.prompt.ifEmpty { node.label }
+            val resolved = resolvePromptSource(rawPrompt, workspaceDir)
+            expandVariables(resolved, graph, context, workspaceDir)
+        } catch (e: Exception) {
+            val outcome = Outcome.fail(e.message ?: "Prompt resolution error")
+            writeStatus(stageDir, outcome)
+            return outcome
+        }
 
         // 3. Write prompt to logs
         File(stageDir, "prompt.md").writeText(prompt)
@@ -87,6 +94,24 @@ class CodergenHandler(val backend: CodergenBackend? = null) : Handler {
             "preferred_label" to outcome.preferredLabel
         )
         File(stageDir, "status.json").writeText(json.encodeToString(statusData))
+    }
+
+    private fun resolvePromptSource(prompt: String, workspaceDir: File): String {
+        val trimmed = prompt.trim()
+        if (!trimmed.startsWith("@")) return prompt
+
+        val relativePath = trimmed.removePrefix("@").trim()
+        require(relativePath.isNotBlank()) { "Prompt file reference is empty (expected @path/to/file.md)" }
+
+        val workspaceRoot = workspaceDir.canonicalFile
+        val target = workspaceDir.resolve(relativePath).canonicalFile
+        val rootPath = workspaceRoot.canonicalPath
+        val targetPath = target.canonicalPath
+        require(
+            targetPath == rootPath || targetPath.startsWith(rootPath + File.separator)
+        ) { "Prompt file '$relativePath' escapes workspace directory" }
+        require(target.exists() && target.isFile) { "Prompt file not found: $relativePath" }
+        return target.readText()
     }
 
     private fun expandVariables(prompt: String, graph: DotGraph, context: Context, workspaceDir: File): String {

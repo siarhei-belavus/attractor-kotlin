@@ -274,7 +274,7 @@ Pipelines are written in Graphviz DOT. Attractor interprets node shapes and attr
 |-------------------|----------|
 | `shape=Mdiamond` | Start node |
 | `shape=Msquare` | Exit node |
-| `shape=box` (default) | LLM prompt node — `prompt=` attribute is sent to the configured model |
+| `shape=box` (default) | LLM prompt node — `prompt=` attribute is sent to the configured model (`@path/to/file.md` supported for workspace prompt files) |
 | `shape=diamond` | Conditional gate — evaluates outgoing edge `condition=` attributes |
 | `shape=hexagon` or `type="wait.human"` | Human review gate — pauses for interactive input |
 | `shape=parallelogram` | Tool node — runs `tool_command=` in the run workspace (`<logsRoot>/workspace`) |

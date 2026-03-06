@@ -29,7 +29,7 @@ Attractor projects are defined using the [Graphviz DOT language](https://graphvi
 | Attribute | Type | Description |
 |-----------|------|-------------|
 | `label` | string | Display name shown in the dashboard and graph view. Defaults to the node ID. |
-| `prompt` | string | LLM instruction for this stage. Required for LLM stage nodes. |
+| `prompt` | string | LLM instruction for this stage. Required for LLM stage nodes. Supports `@relative/path.md` to load prompt text from a file inside the run workspace. |
 | `shape` | string | Determines node behavior. See Node Types above. |
 | `type` | string | Extended type override. Currently: `"wait.human"` for human review gates. |
 | `llm_provider` | string | Optional provider override per stage (`openai`, `anthropic`, `gemini`, `copilot`, `custom`). |

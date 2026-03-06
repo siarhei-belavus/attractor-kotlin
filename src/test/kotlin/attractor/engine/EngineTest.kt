@@ -250,6 +250,29 @@ class EngineTest : FunSpec({
         checkpointFile.readText() shouldContain "step"
     }
 
+    test("codergen prompt can be loaded from workspace file via @path") {
+        val logsRoot = "/tmp/attractor-prompt-file-${System.currentTimeMillis()}"
+        val dot = """
+            digraph PromptFile {
+                start [shape=Mdiamond]
+                exit  [shape=Msquare]
+                seed  [shape=parallelogram, tool_command="mkdir -p prompts && printf 'Plan for: ${'$'}goal' > prompts/plan.md"]
+                plan  [shape=box, prompt="@prompts/plan.md"]
+                start -> seed -> plan -> exit
+            }
+        """.trimIndent()
+
+        val engine = makeEngine(logsRoot = logsRoot)
+        val graph = Parser.parse(dot)
+        val prepared = engine.prepare(graph)
+        val outcome = engine.run(prepared)
+
+        outcome.status shouldBe StageStatus.SUCCESS
+        val renderedPrompt = java.io.File("$logsRoot/plan/prompt.md")
+        renderedPrompt.exists() shouldBe true
+        renderedPrompt.readText() shouldBe "Plan for: "
+    }
+
     test("failure diagnosis: repair attempt succeeds and pipeline continues") {
         val logsRoot = "/tmp/attractor-repair-success-${System.currentTimeMillis()}"
         // work has no outgoing edges → EdgeSelector returns null → triggers diagnosis
