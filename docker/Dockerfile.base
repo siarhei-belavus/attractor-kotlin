@@ -20,3 +20,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         maven \
         curl \
     && rm -rf /var/lib/apt/lists/*
+
+ARG ATTRACTOR_BASE_VERSION=dev
+ENV ATTRACTOR_BASE_VERSION=$ATTRACTOR_BASE_VERSION
