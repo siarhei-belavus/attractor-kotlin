@@ -1,6 +1,7 @@
 package attractor.web
 
 import attractor.db.RunStore
+import attractor.runtime.OverloadedExecutionException
 import com.sun.net.httpserver.HttpExchange
 import com.sun.net.httpserver.HttpServer
 import java.net.InetSocketAddress
@@ -133,6 +134,11 @@ class WebMonitorServer(private val requestedPort: Int, private val registry: Pro
                 ex.responseHeaders.add("Content-Type", "application/json")
                 ex.sendResponseHeaders(200, resp.size.toLong())
                 ex.responseBody.use { it.write(resp) }
+            } catch (e: OverloadedExecutionException) {
+                val err = """{"error":"${e.message?.replace("\"", "'")}","code":"EXECUTION_OVERLOADED"}""".toByteArray()
+                ex.responseHeaders.add("Content-Type", "application/json")
+                ex.sendResponseHeaders(429, err.size.toLong())
+                ex.responseBody.use { it.write(err) }
             } catch (e: Exception) {
                 val err = """{"error":"${e.message?.replace("\"", "'")}"}""".toByteArray()
                 ex.responseHeaders.add("Content-Type", "application/json")
@@ -169,6 +175,11 @@ class WebMonitorServer(private val requestedPort: Int, private val registry: Pro
                 ex.responseHeaders.add("Content-Type", "application/json")
                 ex.sendResponseHeaders(200, resp.size.toLong())
                 ex.responseBody.use { it.write(resp) }
+            } catch (e: OverloadedExecutionException) {
+                val err = """{"error":"${e.message?.replace("\"", "'")}","code":"EXECUTION_OVERLOADED"}""".toByteArray()
+                ex.responseHeaders.add("Content-Type", "application/json")
+                ex.sendResponseHeaders(429, err.size.toLong())
+                ex.responseBody.use { it.write(err) }
             } catch (e: Exception) {
                 val err = """{"error":"${e.message?.replace("\"", "'")}"}""".toByteArray()
                 ex.responseHeaders.add("Content-Type", "application/json")
@@ -198,6 +209,11 @@ class WebMonitorServer(private val requestedPort: Int, private val registry: Pro
                 ex.responseHeaders.add("Content-Type", "application/json")
                 ex.sendResponseHeaders(200, resp.size.toLong())
                 ex.responseBody.use { it.write(resp) }
+            } catch (e: OverloadedExecutionException) {
+                val err = """{"error":"${e.message?.replace("\"", "'")}","code":"EXECUTION_OVERLOADED"}""".toByteArray()
+                ex.responseHeaders.add("Content-Type", "application/json")
+                ex.sendResponseHeaders(429, err.size.toLong())
+                ex.responseBody.use { it.write(err) }
             } catch (e: Exception) {
                 val err = """{"error":"${e.message?.replace("\"", "'")}"}""".toByteArray()
                 ex.responseHeaders.add("Content-Type", "application/json")
@@ -271,6 +287,11 @@ class WebMonitorServer(private val requestedPort: Int, private val registry: Pro
                 ex.responseHeaders.add("Content-Type", "application/json")
                 ex.sendResponseHeaders(200, resp.size.toLong())
                 ex.responseBody.use { it.write(resp) }
+            } catch (e: OverloadedExecutionException) {
+                val err = """{"error":"${e.message?.replace("\"", "'")}","code":"EXECUTION_OVERLOADED"}""".toByteArray()
+                ex.responseHeaders.add("Content-Type", "application/json")
+                ex.sendResponseHeaders(429, err.size.toLong())
+                ex.responseBody.use { it.write(err) }
             } catch (e: Exception) {
                 val err = """{"error":"${e.message?.replace("\"", "'")}"}""".toByteArray()
                 ex.responseHeaders.add("Content-Type", "application/json")
@@ -791,6 +812,11 @@ class WebMonitorServer(private val requestedPort: Int, private val registry: Pro
                 ex.responseHeaders.add("Content-Type", "application/json")
                 ex.sendResponseHeaders(200, resp.size.toLong())
                 ex.responseBody.use { it.write(resp) }
+            } catch (e: OverloadedExecutionException) {
+                val err = """{"error":"${e.message?.replace("\"", "'")}","code":"EXECUTION_OVERLOADED"}""".toByteArray()
+                ex.responseHeaders.add("Content-Type", "application/json")
+                ex.sendResponseHeaders(429, err.size.toLong())
+                ex.responseBody.use { it.write(err) }
             } catch (e: Exception) {
                 val err = """{"error":"${e.message?.replace("\"", "'")}"}""".toByteArray()
                 ex.responseHeaders.add("Content-Type", "application/json")

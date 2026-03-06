@@ -8,7 +8,6 @@ import attractor.dot.DotNode
 val SHAPE_TO_TYPE = mapOf(
     "Mdiamond"       to "start",
     "Msquare"        to "exit",
-    "box"            to "codergen",
     "hexagon"        to "wait.human",
     "diamond"        to "conditional",
     "component"      to "parallel",
@@ -36,7 +35,7 @@ class HandlerRegistry(
         }
 
         // 2. Shape-based resolution
-        val shapeType = SHAPE_TO_TYPE[node.shape]
+        val shapeType = if (node.isCodergenNode()) "codergen" else SHAPE_TO_TYPE[node.shape]
         if (shapeType != null && handlers.containsKey(shapeType)) {
             val h = handlers[shapeType]!!
             // tool handler requires tool_command — fall back if absent

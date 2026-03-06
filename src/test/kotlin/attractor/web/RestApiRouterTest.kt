@@ -314,6 +314,14 @@ class RestApiRouterTest : FunSpec({
         resp.body() shouldContain "execution_mode"
     }
 
+    test("GET /api/v1/metrics/execution returns runtime counters") {
+        val resp = get("/metrics/execution")
+        resp.statusCode() shouldBe 200
+        resp.body() shouldContain "\"activeRuns\""
+        resp.body() shouldContain "\"queuedRuns\""
+        resp.body() shouldContain "\"activeStages\""
+    }
+
     test("PUT /api/v1/settings/execution_mode updates setting and returns 200") {
         val resp = put("/settings/execution_mode", """{"value":"cli"}""")
         resp.statusCode() shouldBe 200

@@ -53,52 +53,6 @@ class CopilotCliAdapter(
         )
     }
 
-    override fun stream(request: Request): Sequence<StreamEvent> {
-        val args = buildArgs(commandTemplate, request)
-        return sequence {
-            val proc = try {
-                runner.start(args)
-            } catch (e: IOException) {
-                val binary = commandTemplate.trim().split("\\s+".toRegex()).firstOrNull() ?: "gh"
-                yield(StreamEvent(StreamEventType.ERROR,
-                    error = ConfigurationError("CLI binary '$binary' not found. Install it or add it to PATH, or switch to API mode in Settings.")))
-                return@sequence
-            }
-
-            yield(StreamEvent(StreamEventType.STREAM_START))
-
-            val reader = proc.inputStream.bufferedReader()
-            try {
-                val buf = CharArray(256)
-                var n: Int
-                while (reader.read(buf).also { n = it } != -1) {
-                    val chunk = String(buf, 0, n)
-                    yield(StreamEvent(StreamEventType.TEXT_DELTA, delta = chunk))
-                }
-            } finally {
-                reader.close()
-            }
-
-            val exit = proc.waitFor()
-            if (exit != 0) {
-                val stderr = proc.errorStream.bufferedReader().readText().take(2048)
-                yield(StreamEvent(StreamEventType.ERROR,
-                    error = ProviderError("CLI exited with code $exit: $stderr", "copilot")))
-                return@sequence
-            }
-
-            val finalMsg = Message.assistant("")
-            val finalResponse = LlmResponse(
-                id = UUID.randomUUID().toString(),
-                model = request.model,
-                provider = "copilot",
-                message = finalMsg,
-                finishReason = FinishReason("stop", "end"),
-                usage = Usage.empty()
-            )
-            yield(StreamEvent(StreamEventType.FINISH,
-                finishReason = FinishReason("stop", "end"),
-                response = finalResponse))
-        }
-    }
+    override fun stream(request: Request): Sequence<StreamEvent> =
+        streamCliProcess(name, commandTemplate, request, runner)
 }

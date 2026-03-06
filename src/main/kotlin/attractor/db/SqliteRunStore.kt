@@ -1,9 +1,19 @@
 package attractor.db
 
+import attractor.runtime.RuntimeMetrics
 import java.sql.DriverManager
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.Executors
+import java.util.concurrent.ScheduledFuture
+import java.util.concurrent.TimeUnit
 
 class SqliteRunStore(dbPath: String) : RunStore {
     private val conn = DriverManager.getConnection("jdbc:sqlite:$dbPath")
+    private val flushExecutor = Executors.newSingleThreadScheduledExecutor()
+    private val pendingLog = ConcurrentHashMap<String, String>()
+    private val flushTasks = ConcurrentHashMap<String, ScheduledFuture<*>>()
+    private val terminalRuns = ConcurrentHashMap.newKeySet<String>()
+    private val flushDebounceMs = 125L
 
     init {
         conn.createStatement().use { stmt ->
@@ -134,10 +144,18 @@ class SqliteRunStore(dbPath: String) : RunStore {
 
     @Synchronized
     override fun updateStatus(id: String, status: String) {
-        conn.prepareStatement("UPDATE project_runs SET status=? WHERE id=?").use { ps ->
-            ps.setString(1, status)
-            ps.setString(2, id)
-            ps.executeUpdate()
+        if (isTerminalStatus(status)) {
+            terminalRuns.add(id)
+            flushNow(id) // flush pending non-terminal logs before terminal transition
+        } else {
+            terminalRuns.remove(id)
+        }
+        writeDb("updateStatus") {
+            conn.prepareStatement("UPDATE project_runs SET status=? WHERE id=?").use { ps ->
+                ps.setString(1, status)
+                ps.setString(2, id)
+                ps.executeUpdate()
+            }
         }
     }
 
@@ -162,11 +180,19 @@ class SqliteRunStore(dbPath: String) : RunStore {
 
     @Synchronized
     override fun updateLog(id: String, log: String) {
-        conn.prepareStatement("UPDATE project_runs SET project_log=? WHERE id=?").use { ps ->
-            ps.setString(1, log)
-            ps.setString(2, id)
-            ps.executeUpdate()
+        if (terminalRuns.contains(id)) {
+            flushNow(id)
+            writeDb("updateLog(terminal)") {
+                conn.prepareStatement("UPDATE project_runs SET project_log=? WHERE id=?").use { ps ->
+                    ps.setString(1, log)
+                    ps.setString(2, id)
+                    ps.executeUpdate()
+                }
+            }
+            return
         }
+        pendingLog[id] = log
+        scheduleFlush(id)
     }
 
     @Synchronized
@@ -180,6 +206,7 @@ class SqliteRunStore(dbPath: String) : RunStore {
 
     @Synchronized
     override fun getAll(): List<StoredRun> {
+        flushPendingWrites()
         val result = mutableListOf<StoredRun>()
         conn.createStatement().use { stmt ->
             stmt.executeQuery(
@@ -210,6 +237,7 @@ class SqliteRunStore(dbPath: String) : RunStore {
 
     @Synchronized
     override fun getById(id: String): StoredRun? {
+        flushPendingWrites()
         conn.prepareStatement(
             "SELECT id, file_name, dot_source, status, logs_root, simulate, auto_approve, created_at, project_log, archived, original_prompt, finished_at, display_name, project_family_id FROM project_runs WHERE id=?"
         ).use { ps ->
@@ -263,6 +291,7 @@ class SqliteRunStore(dbPath: String) : RunStore {
     @Synchronized
     override fun getByFamilyId(familyId: String): List<StoredRun> {
         if (familyId.isBlank()) return emptyList()
+        flushPendingWrites()
         val result = mutableListOf<StoredRun>()
         conn.prepareStatement(
             "SELECT id, file_name, dot_source, status, logs_root, simulate, auto_approve, created_at, project_log, archived, original_prompt, finished_at, display_name, project_family_id FROM project_runs WHERE project_family_id=? ORDER BY created_at ASC"
@@ -337,6 +366,53 @@ class SqliteRunStore(dbPath: String) : RunStore {
 
     @Synchronized
     override fun close() {
+        flushTasks.keys.toList().forEach { flushNow(it) }
+        flushExecutor.shutdownNow()
         runCatching { conn.close() }
+    }
+
+    private fun isTerminalStatus(status: String): Boolean =
+        status == "completed" || status == "failed" || status == "cancelled" || status == "paused"
+
+    private fun scheduleFlush(id: String) {
+        val existing = flushTasks[id]
+        if (existing != null && !existing.isDone) return
+        val task = flushExecutor.schedule({
+            flushNow(id)
+        }, flushDebounceMs, TimeUnit.MILLISECONDS)
+        flushTasks[id] = task
+    }
+
+    private fun flushPendingWrites() {
+        val ids = LinkedHashSet<String>(pendingLog.keys)
+        ids.forEach { flushNow(it) }
+    }
+
+    @Synchronized
+    private fun flushNow(id: String) {
+        flushTasks.remove(id)?.cancel(false)
+        val log = pendingLog.remove(id)
+        if (log == null) return
+        writeDb("flushNow") {
+            conn.prepareStatement("UPDATE project_runs SET project_log=? WHERE id=?").use { ps ->
+                ps.setString(1, log)
+                ps.setString(2, id)
+                ps.executeUpdate()
+            }
+        }
+    }
+
+    private inline fun writeDb(op: String, action: () -> Unit) {
+        val started = System.nanoTime()
+        var ok = false
+        try {
+            action()
+            ok = true
+        } finally {
+            RuntimeMetrics.recordDbWrite(System.nanoTime() - started, ok)
+            if (!ok) {
+                System.err.println("[attractor] db_write_error op=$op")
+            }
+        }
     }
 }

@@ -72,6 +72,10 @@ data class DotNode(
     val autoStatus: Boolean get() = attrBool("auto_status")
     val allowPartial: Boolean get() = attrBool("allow_partial")
 
+    fun isCodergenNode(): Boolean {
+        return type.lowercase() == "codergen" || shape == "box" || llmProvider.isNotBlank()
+    }
+
     fun isStart(): Boolean = shape == "Mdiamond" || id.lowercase() == "start"
     fun isExit(): Boolean = shape == "Msquare" || id.lowercase() in setOf("exit", "end")
     fun isTerminal(): Boolean = isExit()

@@ -5,6 +5,8 @@ import attractor.db.StoredRun
 import attractor.dot.Parser
 import attractor.lint.Validator
 import attractor.llm.ModelCatalog
+import attractor.runtime.OverloadedExecutionException
+import attractor.runtime.RuntimeMetrics
 import attractor.workspace.WorkspaceGit
 import com.sun.net.httpserver.HttpExchange
 import kotlinx.serialization.json.Json
@@ -15,6 +17,7 @@ import kotlinx.serialization.json.jsonPrimitive
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.TimeUnit
+import java.util.Locale
 import java.util.zip.ZipEntry
 import java.util.zip.ZipInputStream
 import java.util.zip.ZipOutputStream
@@ -234,6 +237,8 @@ class RestApiRouter(
                 // Models
                 method == "GET" && segments == listOf("models") ->
                     handleGetModels(ex)
+                method == "GET" && segments == listOf("metrics", "execution") ->
+                    handleGetExecutionMetrics(ex)
 
                 // Events
                 method == "GET" && segments == listOf("events") ->
@@ -253,6 +258,8 @@ class RestApiRouter(
 
                 else -> errorResponse(ex, 404, "not found", "NOT_FOUND")
             }
+        } catch (e: OverloadedExecutionException) {
+            runCatching { errorResponse(ex, 429, e.message ?: "execution overloaded", "EXECUTION_OVERLOADED") }
         } catch (e: Exception) {
             runCatching { errorResponse(ex, 500, e.message ?: "internal error", "INTERNAL_ERROR") }
         }
@@ -346,6 +353,18 @@ class RestApiRouter(
             onUpdate = onUpdate
         )
         jsonResponse(ex, 201, """{"id":${js(id)},"status":"running"}""")
+    }
+
+    private fun handleGetExecutionMetrics(ex: HttpExchange) {
+        val m = RuntimeMetrics.snapshot()
+        val providers = m.activeStagesByProvider.entries
+            .sortedBy { it.key }
+            .joinToString(",") { (k, v) -> "\"${k}\":$v" }
+        jsonResponse(
+            ex,
+            200,
+            """{"activeRuns":${m.activeRuns},"queuedRuns":${m.queuedRuns},"activeStages":${m.activeStages},"activeStagesByProvider":{$providers},"stageQueueWaitAvgMs":${"%.3f".format(Locale.US, m.stageQueueWaitAvgMs)},"stageExecAvgMs":${"%.3f".format(Locale.US, m.stageExecAvgMs)},"dbWriteAvgMs":${"%.3f".format(Locale.US, m.dbWriteAvgMs)},"dbWriteErrors":${m.dbWriteErrors},"queueRejects":${m.queueRejects},"limiterSaturation":${m.limiterSaturation},"stageTimeouts":${m.stageTimeouts},"stageCancels":${m.stageCancels},"subprocessForceKills":${m.subprocessForceKills}}"""
+        )
     }
 
     private fun handleUploadDot(ex: HttpExchange) {

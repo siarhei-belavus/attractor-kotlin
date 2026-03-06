@@ -15,10 +15,13 @@ import attractor.handlers.LlmCodergenBackend
 import attractor.handlers.SimulationBackend
 import attractor.human.AutoApproveInterviewer
 import attractor.llm.ClientProvider
+import attractor.runtime.ExecutionRuntime
+import attractor.runtime.OverloadedExecutionException
+import attractor.runtime.RuntimeMetrics
 import attractor.transform.StylesheetApplicationTransform
 import attractor.transform.VariableExpansionTransform
 import attractor.workspace.WorkspaceGit
-import java.util.concurrent.Executors
+import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicLong
 
 data class RunOptions(
@@ -27,10 +30,38 @@ data class RunOptions(
 )
 
 object ProjectRunner {
-    private val executor = Executors.newFixedThreadPool(
-        (Runtime.getRuntime().availableProcessors() * 2).coerceAtLeast(4)
-    )
+    private val executor = ExecutionRuntime.runExecutor
     private val counter = AtomicLong(0)
+    private val pendingRuns = AtomicInteger(0)
+
+    private fun tryEnqueueRun() {
+        val next = pendingRuns.incrementAndGet()
+        if (next > ExecutionRuntime.maxPendingRuns) {
+            pendingRuns.decrementAndGet()
+            RuntimeMetrics.queueRejects.incrementAndGet()
+            throw OverloadedExecutionException(
+                "Pending run queue limit reached (${ExecutionRuntime.maxPendingRuns}). " +
+                    "Try again later or increase ATTRACTOR_MAX_PENDING_RUNS."
+            )
+        }
+        RuntimeMetrics.queuedRuns.incrementAndGet()
+    }
+
+    private fun dropQueuedSlot() {
+        pendingRuns.updateAndGet { current -> if (current > 0) current - 1 else 0 }
+        RuntimeMetrics.queuedRuns.updateAndGet { current -> if (current > 0) current - 1 else 0 }
+    }
+
+    private inline fun withRunExecution(crossinline block: () -> Unit): Runnable = Runnable {
+        RuntimeMetrics.queuedRuns.decrementAndGet()
+        pendingRuns.decrementAndGet()
+        RuntimeMetrics.activeRuns.incrementAndGet()
+        try {
+            block()
+        } finally {
+            RuntimeMetrics.activeRuns.decrementAndGet()
+        }
+    }
 
     fun submit(
         dotSource: String,
@@ -47,12 +78,24 @@ object ProjectRunner {
         val displayName = displayNameOverride.ifBlank { NameGenerator.generate() }
         // Self-bootstrap: if no familyId provided, this run starts its own family
         val effectiveFamilyId = familyId.ifBlank { id }
-        val state = registry.register(id, fileName, dotSource, options, originalPrompt, displayName, effectiveFamilyId)
-
-        val future = executor.submit {
-            runProject(id, dotSource, options, state, registry, store, onUpdate)
+        tryEnqueueRun()
+        val state = try {
+            registry.register(id, fileName, dotSource, options, originalPrompt, displayName, effectiveFamilyId)
+        } catch (e: Exception) {
+            dropQueuedSlot()
+            throw e
         }
-        registry.registerFuture(id, future)
+
+        try {
+            val future = executor.submit(withRunExecution {
+                runProject(id, dotSource, options, state, registry, store, onUpdate)
+            })
+            registry.registerFuture(id, future)
+        } catch (e: Exception) {
+            dropQueuedSlot()
+            registry.delete(id)
+            throw e
+        }
 
         return id
     }
@@ -64,13 +107,19 @@ object ProjectRunner {
         onUpdate: () -> Unit
     ) {
         val entry = registry.get(id) ?: return
-        entry.state.reset()
-        store.updateStatus(id, "running")
-        onUpdate()
-        val future = executor.submit {
-            runProject(id, entry.dotSource, entry.options, entry.state, registry, store, onUpdate)
+        tryEnqueueRun()
+        try {
+            entry.state.reset()
+            store.updateStatus(id, "running")
+            onUpdate()
+            val future = executor.submit(withRunExecution {
+                runProject(id, entry.dotSource, entry.options, entry.state, registry, store, onUpdate)
+            })
+            registry.registerFuture(id, future)
+        } catch (e: Exception) {
+            dropQueuedSlot()
+            throw e
         }
-        registry.registerFuture(id, future)
     }
 
     fun resumeProject(
@@ -81,17 +130,23 @@ object ProjectRunner {
     ) {
         val entry = registry.get(id) ?: return
         if (entry.state.status.get() != "paused") return
-        entry.state.pauseToken.set(false)
-        entry.state.status.set("running")
-        store.updateStatus(id, "running")
-        onUpdate()
-        val future = executor.submit {
-            // resume = true: engine will load checkpoint and continue from last saved node
-            // NOTE: Checkpoint.create() records currentNode = <just-completed-node-id>,
-            // so the engine re-runs that node on resume. This is intentional existing behaviour.
-            runProject(id, entry.dotSource, entry.options, entry.state, registry, store, onUpdate, resume = true)
+        tryEnqueueRun()
+        try {
+            entry.state.pauseToken.set(false)
+            entry.state.status.set("running")
+            store.updateStatus(id, "running")
+            onUpdate()
+            val future = executor.submit(withRunExecution {
+                // resume = true: engine will load checkpoint and continue from last saved node
+                // NOTE: Checkpoint.create() records currentNode = <just-completed-node-id>,
+                // so the engine re-runs that node on resume. This is intentional existing behaviour.
+                runProject(id, entry.dotSource, entry.options, entry.state, registry, store, onUpdate, resume = true)
+            })
+            registry.registerFuture(id, future)
+        } catch (e: Exception) {
+            dropQueuedSlot()
+            throw e
         }
-        registry.registerFuture(id, future)
     }
 
     private fun runProject(
@@ -149,6 +204,7 @@ object ProjectRunner {
                 logsRoot = logsRoot,
                 autoApprove = options.autoApprove,
                 resume = resume,
+                runId = id,
                 transforms = listOf(VariableExpansionTransform(), StylesheetApplicationTransform()),
                 cancelCheck = { state.cancelToken.get() },
                 pauseCheck  = { state.pauseToken.get() },

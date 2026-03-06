@@ -42,7 +42,7 @@ A DOT-based pipeline runner that orchestrates multi-stage AI workflows. You defi
 - **Persist & resume** — run state is stored in SQLite (default), MySQL, or PostgreSQL; configured via `ATTRACTOR_DB_*` environment variables; crashed runs can be resumed from checkpoints
 - **Web dashboard** — real-time SSE-powered UI at `http://localhost:7070`; supports multiple concurrent pipelines; upload `.dot` files via the browser
 - **Documentation** — full docs published at [coreydaley.github.io/attractor](https://coreydaley.github.io/attractor/); the Docs button in the nav bar opens the site in a new tab
-- **REST API v1** — 37-endpoint versioned REST API at `/api/v1/`; full reference at [coreydaley.github.io/attractor](https://coreydaley.github.io/attractor/)
+- **REST API v1** — 38-endpoint versioned REST API at `/api/v1/`; full reference at [coreydaley.github.io/attractor](https://coreydaley.github.io/attractor/)
 
 ## Requirements
 
@@ -166,6 +166,14 @@ Full documentation: https://attractor.coreydaley.dev/docker/
 | `ATTRACTOR_GEMINI_API_KEY` or `ATTRACTOR_GOOGLE_API_KEY` | API key for Google Gemini (Direct API mode) |
 | `ATTRACTOR_DEBUG` | Set to any value to enable debug output and stack traces |
 | `ATTRACTOR_HOST` | Default server URL for the CLI (overridden by `--host`; e.g. `http://attractor.example.com:7070`) |
+| `ATTRACTOR_VTHREAD_EXECUTION_ENABLED` | Enable virtual-thread run execution (`false` by default) |
+| `ATTRACTOR_MAX_PENDING_RUNS` | Max queued runs before `429 EXECUTION_OVERLOADED` (default `500`) |
+| `ATTRACTOR_MAX_ACTIVE_STAGES` | Global max concurrently executing stages (default `32`) |
+| `ATTRACTOR_MAX_ACTIVE_LLM_OPENAI` | Max concurrent OpenAI LLM stages (default `8`) |
+| `ATTRACTOR_MAX_ACTIVE_LLM_ANTHROPIC` | Max concurrent Anthropic LLM stages (default `8`) |
+| `ATTRACTOR_MAX_ACTIVE_LLM_GEMINI` | Max concurrent Gemini LLM stages (default `8`) |
+| `ATTRACTOR_MAX_ACTIVE_LLM_COPILOT` | Max concurrent Copilot LLM stages (default `8`) |
+| `ATTRACTOR_SUBPROCESS_CANCEL_GRACE_MS` | Grace period before forced kill for cancelled CLI subprocesses (default `1500`) |
 
 ## LLM Providers
 

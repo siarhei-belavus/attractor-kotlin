@@ -252,6 +252,23 @@ These environment variables seed the Custom provider's Settings UI on first star
 
 In CLI mode, each provider has an editable command template. Use `{prompt}` and `{model}` as substitution placeholders for the generated prompt text and effective model. In CLI mode, OpenAI defaults to `gpt-5.3-codex`.
 
+### Execution Concurrency
+
+Attractor supports a virtual-thread execution mode with bounded run and stage concurrency.
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `ATTRACTOR_VTHREAD_EXECUTION_ENABLED` | `false` | Enables virtual-thread run scheduling (`Executors.newVirtualThreadPerTaskExecutor`) |
+| `ATTRACTOR_MAX_PENDING_RUNS` | `500` | Maximum queued runs before new submissions return `429 EXECUTION_OVERLOADED` |
+| `ATTRACTOR_MAX_ACTIVE_STAGES` | `32` | Global stage concurrency limit across all runs |
+| `ATTRACTOR_MAX_ACTIVE_LLM_OPENAI` | `8` | OpenAI LLM stage concurrency limit |
+| `ATTRACTOR_MAX_ACTIVE_LLM_ANTHROPIC` | `8` | Anthropic LLM stage concurrency limit |
+| `ATTRACTOR_MAX_ACTIVE_LLM_GEMINI` | `8` | Gemini LLM stage concurrency limit |
+| `ATTRACTOR_MAX_ACTIVE_LLM_COPILOT` | `8` | Copilot LLM stage concurrency limit |
+| `ATTRACTOR_SUBPROCESS_CANCEL_GRACE_MS` | `1500` | Grace period before a forced kill for cancelled CLI subprocesses |
+
+Execution metrics are available at `GET /api/v1/metrics/execution`.
+
 ### System Tools
 
 The System Tools grid shows detected binaries on the host. **Required** tools (`java`, `git`, `graphviz`) must be present for core features to work — a warning banner appears at the top of every page if any are missing. **Optional** tools are used by LLM-generated project stages and do not block Attractor itself.

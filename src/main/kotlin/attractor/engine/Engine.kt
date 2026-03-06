@@ -5,6 +5,8 @@ import attractor.events.ProjectEvent
 import attractor.events.ProjectEventBus
 import attractor.handlers.HandlerRegistry
 import attractor.lint.Validator
+import attractor.runtime.ExecutionRuntime
+import attractor.runtime.RuntimeMetrics
 import attractor.state.Checkpoint
 import attractor.state.Context
 import attractor.state.Outcome
@@ -20,6 +22,7 @@ import java.util.concurrent.TimeoutException
 
 data class EngineConfig(
     val logsRoot: String = "logs",
+    val runId: String = "",
     val autoApprove: Boolean = false,
     val resume: Boolean = false,
     val transforms: List<Transform> = listOf(
@@ -74,7 +77,7 @@ class Engine(
      * Core execution loop (Section 3.2).
      */
     private fun runLoop(graph: DotGraph, startNodeId: String): Outcome {
-        val runId = "run-${System.currentTimeMillis()}"
+        val runId = config.runId.ifBlank { "run-${System.currentTimeMillis()}" }
         val graphName = graph.id
 
         File(config.logsRoot).mkdirs()
@@ -129,7 +132,7 @@ class Engine(
                 if (node.isTerminal()) {
                     eventBus.emit(ProjectEvent.StageStarted(node.label, stageIndex, nodeId = node.id))
                     val terminalStart = System.currentTimeMillis()
-                    val exitOutcome = executeNodeWithRetry(node, context, graph, stageIndex)
+                    val exitOutcome = executeNodeWithRetry(runId, node, context, graph, stageIndex)
                     val terminalDuration = System.currentTimeMillis() - terminalStart
                     lastOutcome = exitOutcome
 
@@ -167,7 +170,7 @@ class Engine(
                 eventBus.emit(ProjectEvent.StageStarted(node.label, stageIndex, nodeId = node.id))
                 val nodeStart = System.currentTimeMillis()
 
-                val outcome = executeNodeWithRetry(node, context, graph, stageIndex)
+                val outcome = executeNodeWithRetry(runId, node, context, graph, stageIndex)
                 lastOutcome = outcome
 
                 val nodeDuration = System.currentTimeMillis() - nodeStart
@@ -305,6 +308,7 @@ class Engine(
     }
 
     private fun executeNodeWithRetry(
+        runId: String,
         node: attractor.dot.DotNode,
         context: Context,
         graph: DotGraph,
@@ -319,17 +323,23 @@ class Engine(
 
                 // Timeout enforcement (Section 2.6)
                 val raw: Outcome = if (node.timeoutMillis > 0) {
-                    val future = CompletableFuture.supplyAsync {
-                        handler.execute(node, context, graph, config.logsRoot)
-                    }
+                    val future = CompletableFuture.supplyAsync({
+                        executeHandlerWithLimiter(runId, node, context, graph, handler, config.logsRoot)
+                    }, ExecutionRuntime.timeoutExecutor)
+                    val startedAt = System.currentTimeMillis()
                     try {
                         future.get(node.timeoutMillis, TimeUnit.MILLISECONDS)
                     } catch (e: TimeoutException) {
+                        RuntimeMetrics.stageTimeouts.incrementAndGet()
                         future.cancel(true)
+                        println(
+                            "[attractor] stage_timeout run_id=$runId node_id=${node.id} " +
+                                "timeout_ms=${node.timeoutMillis} elapsed_ms=${System.currentTimeMillis() - startedAt}"
+                        )
                         return Outcome.fail("Node '${node.id}' timed out after ${node.timeoutMillis}ms")
                     }
                 } else {
-                    handler.execute(node, context, graph, config.logsRoot)
+                    executeHandlerWithLimiter(runId, node, context, graph, handler, config.logsRoot)
                 }
 
                 // auto_status: if no status.json was written by the handler, auto-generate SUCCESS (Section 2.6)
@@ -342,6 +352,8 @@ class Engine(
 
                 raw
             } catch (e: InterruptedException) {
+                RuntimeMetrics.stageCancels.incrementAndGet()
+                println("[attractor] stage_cancelled run_id=${config.runId.ifBlank { "unknown" }} node_id=${node.id}")
                 Thread.currentThread().interrupt()
                 throw e
             } catch (e: Exception) {
@@ -503,24 +515,54 @@ class Engine(
         return try {
             val handler = registry.resolve(node)
             if (node.timeoutMillis > 0) {
-                val future = CompletableFuture.supplyAsync {
-                    handler.execute(node, context, graph, repairLogsRoot)
-                }
+                val future = CompletableFuture.supplyAsync({
+                    executeHandlerWithLimiter(config.runId.ifBlank { "repair-${System.currentTimeMillis()}" }, node, context, graph, handler, repairLogsRoot)
+                }, ExecutionRuntime.timeoutExecutor)
+                val startedAt = System.currentTimeMillis()
                 try {
                     future.get(node.timeoutMillis, TimeUnit.MILLISECONDS)
                 } catch (e: TimeoutException) {
+                    RuntimeMetrics.stageTimeouts.incrementAndGet()
                     future.cancel(true)
+                    println(
+                        "[attractor] stage_timeout run_id=${config.runId.ifBlank { "repair" }} node_id=${node.id} " +
+                            "timeout_ms=${node.timeoutMillis} elapsed_ms=${System.currentTimeMillis() - startedAt}"
+                    )
                     Outcome.fail("Repair timed out after ${node.timeoutMillis}ms")
                 }
             } else {
-                handler.execute(node, context, graph, repairLogsRoot)
+                executeHandlerWithLimiter(config.runId.ifBlank { "repair-${System.currentTimeMillis()}" }, node, context, graph, handler, repairLogsRoot)
             }
         } catch (e: InterruptedException) {
+            RuntimeMetrics.stageCancels.incrementAndGet()
             Thread.currentThread().interrupt()
             throw e
         } catch (e: Exception) {
             Outcome.fail(e.message ?: "repair exception")
         }
+    }
+
+    private fun executeHandlerWithLimiter(
+        runId: String,
+        node: attractor.dot.DotNode,
+        context: Context,
+        graph: DotGraph,
+        handler: attractor.handlers.Handler,
+        logsRoot: String
+    ): Outcome {
+        return ExecutionRuntime.stageLimiter.withPermit(
+            runId = runId,
+            nodeId = node.id,
+            nodeType = node.type.ifBlank { node.shape },
+            provider = llmProviderForNode(node)
+        ) {
+            handler.execute(node, context, graph, logsRoot)
+        }
+    }
+
+    private fun llmProviderForNode(node: attractor.dot.DotNode): String? {
+        if (!node.isCodergenNode()) return null
+        return node.llmProvider.ifBlank { null }
     }
 
     private fun elapsed(): Long = System.currentTimeMillis() - startTime
