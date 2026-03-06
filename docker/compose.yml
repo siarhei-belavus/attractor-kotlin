@@ -1,0 +1,141 @@
+# =============================================================================
+# Attractor — Docker Compose
+# =============================================================================
+#
+# Quick start (SQLite, no LLM keys needed for the UI):
+#   docker compose -f docker/compose.yml up
+#
+# With API keys — copy .env.example to .env, fill in your keys, then:
+#   docker compose -f docker/compose.yml up
+#
+# Optional profiles:
+#   --profile ollama     Add Ollama for local LLM inference
+#   --profile postgres   Add PostgreSQL instead of SQLite
+#
+# Examples:
+#   docker compose -f docker/compose.yml --profile ollama up
+#   docker compose -f docker/compose.yml --profile postgres up
+#   docker compose -f docker/compose.yml --profile ollama --profile postgres up
+#
+# Or via make:
+#   make docker-up
+#   make docker-up PROFILES=ollama
+#   make docker-up PROFILES="ollama postgres"
+# =============================================================================
+
+services:
+
+  # ── Attractor ──────────────────────────────────────────────────────────────
+  attractor:
+    image: ghcr.io/coreydaley/attractor:latest
+    pull_policy: always
+    ports:
+      - "${ATTRACTOR_PORT:-7070}:7070"
+    volumes:
+      - attractor-data:/app/data
+      - attractor-projects:/app/projects
+    environment:
+      # ── LLM provider API keys ─────────────────────────────────────────────
+      ATTRACTOR_ANTHROPIC_API_KEY:  ${ATTRACTOR_ANTHROPIC_API_KEY:-}
+      ATTRACTOR_OPENAI_API_KEY:     ${ATTRACTOR_OPENAI_API_KEY:-}
+      ATTRACTOR_GEMINI_API_KEY:     ${ATTRACTOR_GEMINI_API_KEY:-}
+      ATTRACTOR_GOOGLE_API_KEY:     ${ATTRACTOR_GOOGLE_API_KEY:-}
+
+      # ── Custom OpenAI-compatible API (Ollama, LM Studio, vLLM, etc.) ──────
+      # When using --profile ollama, set ATTRACTOR_CUSTOM_API_HOST=http://ollama
+      # and ATTRACTOR_CUSTOM_API_ENABLED=true in your .env file.
+      ATTRACTOR_CUSTOM_API_ENABLED: ${ATTRACTOR_CUSTOM_API_ENABLED:-false}
+      ATTRACTOR_CUSTOM_API_HOST:    ${ATTRACTOR_CUSTOM_API_HOST:-http://localhost}
+      ATTRACTOR_CUSTOM_API_PORT:    ${ATTRACTOR_CUSTOM_API_PORT:-11434}
+      ATTRACTOR_CUSTOM_API_KEY:     ${ATTRACTOR_CUSTOM_API_KEY:-}
+      ATTRACTOR_CUSTOM_API_MODEL:   ${ATTRACTOR_CUSTOM_API_MODEL:-llama3.2}
+
+      # ── Projects directory ────────────────────────────────────────────────
+      ATTRACTOR_PROJECTS_DIR:       ${ATTRACTOR_PROJECTS_DIR:-/app/projects}
+
+      # ── Database ──────────────────────────────────────────────────────────
+      # Defaults to SQLite at /app/data/attractor.db (volume-backed).
+      # When using --profile postgres, set ATTRACTOR_DB_TYPE=postgresql and
+      # the ATTRACTOR_DB_* vars in your .env file.
+      ATTRACTOR_DB_TYPE:            ${ATTRACTOR_DB_TYPE:-sqlite}
+      ATTRACTOR_DB_NAME:            ${ATTRACTOR_DB_NAME:-/app/data/attractor.db}
+      ATTRACTOR_DB_HOST:            ${ATTRACTOR_DB_HOST:-}
+      ATTRACTOR_DB_PORT:            ${ATTRACTOR_DB_PORT:-}
+      ATTRACTOR_DB_USER:            ${ATTRACTOR_DB_USER:-}
+      ATTRACTOR_DB_PASSWORD:        ${ATTRACTOR_DB_PASSWORD:-}
+      ATTRACTOR_DB_URL:             ${ATTRACTOR_DB_URL:-}
+
+      # ── Debug ─────────────────────────────────────────────────────────────
+      ATTRACTOR_DEBUG:              ${ATTRACTOR_DEBUG:-}
+
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:7070/api/v1/settings"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    restart: unless-stopped
+
+  # ── Ollama — local LLM inference (opt-in: --profile ollama) ───────────────
+  #
+  # After starting with this profile, configure Attractor to use Ollama:
+  #   ATTRACTOR_CUSTOM_API_ENABLED=true
+  #   ATTRACTOR_CUSTOM_API_HOST=http://ollama
+  #   ATTRACTOR_CUSTOM_API_PORT=11434
+  #   ATTRACTOR_CUSTOM_API_MODEL=llama3.2
+  #
+  # Pull a model once the container is running:
+  #   docker compose -f docker/compose.yml exec ollama ollama pull llama3.2
+  #
+  ollama:
+    profiles: [ollama]
+    image: ollama/ollama:latest
+    pull_policy: always
+    ports:
+      - "${OLLAMA_PORT:-11434}:11434"
+    volumes:
+      - ollama-data:/root/.ollama
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:11434/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    restart: unless-stopped
+
+  # ── PostgreSQL — external database backend (opt-in: --profile postgres) ────
+  #
+  # Set these in your .env to connect Attractor to this database:
+  #   ATTRACTOR_DB_TYPE=postgresql
+  #   ATTRACTOR_DB_HOST=postgres
+  #   ATTRACTOR_DB_PORT=5432
+  #   ATTRACTOR_DB_NAME=attractor
+  #   ATTRACTOR_DB_USER=attractor
+  #   ATTRACTOR_DB_PASSWORD=attractor
+  #
+  postgres:
+    profiles: [postgres]
+    image: postgres:17-alpine
+    pull_policy: always
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB:       ${ATTRACTOR_DB_NAME:-attractor}
+      POSTGRES_USER:     ${ATTRACTOR_DB_USER:-attractor}
+      POSTGRES_PASSWORD: ${ATTRACTOR_DB_PASSWORD:-attractor}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${ATTRACTOR_DB_USER:-attractor} -d ${ATTRACTOR_DB_NAME:-attractor}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+
+# ── Volumes ───────────────────────────────────────────────────────────────────
+volumes:
+  attractor-data:     # SQLite database and persistent app data
+  attractor-projects: # Pipeline output: logs, workspaces, checkpoints, artifacts
+  ollama-data:        # Ollama model cache
+  postgres-data:      # PostgreSQL data directory
