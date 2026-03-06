@@ -43,14 +43,14 @@ help:
 	@echo ""
 	@echo "  Options (pass on command line):"
 	@echo "    WEB_PORT=<n>   Web UI port  (default: $(WEB_PORT))"
-	@echo "    JAVA_HOME=<p>  JDK 22 path  (default: $(JAVA_HOME))"
+	@echo "    JAVA_HOME=<p>  JDK 25 path  (default: $(JAVA_HOME))"
 	@echo ""
 
 build:
 	$(GRADLEW) build
 
 test:
-	$(GRADLEW) test
+	$(GRADLEW) test --rerun
 
 clean:
 	$(GRADLEW) clean

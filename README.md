@@ -23,7 +23,7 @@ A DOT-based pipeline runner that orchestrates multi-stage AI workflows. You defi
 - **Persist & resume** — run state is stored in SQLite (default), MySQL, or PostgreSQL; configured via `ATTRACTOR_DB_*` environment variables; crashed runs can be resumed from checkpoints
 - **Web dashboard** — real-time SSE-powered UI at `http://localhost:7070`; supports multiple concurrent pipelines; upload `.dot` files via the browser
 - **Documentation** — full docs published at [coreydaley.github.io/attractor](https://coreydaley.github.io/attractor/); the Docs button in the nav bar opens the site in a new tab
-- **REST API v1** — 35-endpoint versioned REST API at `/api/v1/`; see [`docs/api/rest-v1.md`](docs/api/rest-v1.md) for the full reference
+- **REST API v1** — 37-endpoint versioned REST API at `/api/v1/`; full reference at [coreydaley.github.io/attractor](https://coreydaley.github.io/attractor/)
 
 ## Requirements
 
@@ -70,7 +70,7 @@ Pass these on the command line to override defaults:
 | Option | Default | Description |
 |--------|---------|-------------|
 | `WEB_PORT=<n>` | `7070` | Web UI port |
-| `JAVA_HOME=<path>` | `/opt/homebrew/opt/openjdk@25/…` | Path to JDK 21 |
+| `JAVA_HOME=<path>` | `/opt/homebrew/opt/openjdk@25/…` | Path to JDK 25 |
 
 ```bash
 make run WEB_PORT=8080
@@ -161,7 +161,7 @@ CLI mode does not require environment variable API keys — authentication is ha
 
 ### System tool warnings
 
-The Settings page shows a **Required** and **Optional** tool grid. Missing required tools (`java`, `git`, `dot`) trigger a warning banner at the top of the page. Use `make install-runtime-deps` to install all three interactively.
+The Settings page shows a **Required** and **Optional** tool grid. Missing required tools (`java`, `git`, `graphviz`) trigger a warning banner at the top of the page. Use `make install-runtime-deps` to install all three interactively.
 
 ## Database Configuration
 
@@ -219,7 +219,6 @@ Attractor creates the database schema automatically on first start. A misconfigu
 
 Once running, open `http://localhost:7070` (or your chosen port) in a browser to start creating and executing pipelines. From the web interface you can describe a pipeline goal in natural language, review the generated DOT graph, and run it — all without touching the command line.
 
-Click **Docs** in the navigation bar to open the built-in documentation window. It provides comprehensive, self-contained reference material organized into four tabs — Web App, REST API, CLI, and DOT Format — served directly by the Attractor server with no external dependencies.
 
 ## Pipeline Format
 
@@ -305,7 +304,6 @@ Selected endpoints:
 | Method | Path | Description |
 |--------|------|-------------|
 | `GET` | `/` | Dashboard UI |
-| `GET` | `/docs` | Built-in documentation window (four tabs) |
 | `GET` | `/api/v1/pipelines` | List all pipeline states |
 | `POST` | `/api/v1/pipelines` | Submit a new pipeline |
 | `GET` | `/api/v1/pipelines/{id}` | Get a single pipeline (includes `dotSource`) |
@@ -332,7 +330,7 @@ Selected endpoints:
 | `GET` | `/events` | SSE stream of all pipeline state updates |
 | `GET` | `/events/{id}` | SSE stream for a single pipeline |
 
-For the complete endpoint listing with request/response shapes and `curl` examples, see [`docs/api/rest-v1.md`](docs/api/rest-v1.md) or open the built-in **Docs** window from the web UI.
+For the complete endpoint listing with request/response shapes and `curl` examples, see the [REST API reference](https://coreydaley.github.io/attractor/) in the documentation site.
 
 ## CLI
 
@@ -366,7 +364,7 @@ Add `bin/` to your `$PATH` to use `attractor` as a bare command anywhere.
 
 | Flag | Description |
 |------|-------------|
-| `--host <url>` | Server base URL. Overrides `ATTRACTOR_HOST`; defaults to `http://localhost:8080` |
+| `--host <url>` | Server base URL. Overrides `ATTRACTOR_HOST`; defaults to `http://localhost:7070` |
 | `--output json` | Output raw JSON instead of formatted tables |
 | `--help`, `-h` | Show usage information |
 | `--version` | Print version and exit |
@@ -472,7 +470,7 @@ attractor artifact export <id> --output artifacts.zip
 attractor pipeline list --output json | jq '.[0].id'
 ```
 
-For the full REST API reference, see [`docs/api/rest-v1.md`](docs/api/rest-v1.md).
+For the full REST API reference, see the [documentation site](https://coreydaley.github.io/attractor/).
 
 ## Project Structure
 
@@ -493,12 +491,11 @@ src/main/kotlin/attractor/
 ├── style/                   # Terminal/output style helpers
 ├── transform/               # Pipeline graph transformations
 └── web/                     # HTTP server, SSE, dashboard, REST API
-    ├── WebMonitorServer.kt  # HTTP server, dashboard SPA, /docs endpoint
+    ├── WebMonitorServer.kt  # HTTP server, dashboard SPA
     ├── RestApiRouter.kt     # Versioned REST API (/api/v1/)
     └── …
 examples/                    # Sample .dot pipelines
 docs/
-├── api/rest-v1.md           # Full REST API reference (35 endpoints)
 └── sprints/                 # Sprint planning and history
 ```
 
